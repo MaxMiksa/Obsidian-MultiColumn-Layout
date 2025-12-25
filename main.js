@@ -95,7 +95,7 @@ class MultiColumnLayoutPlugin extends Plugin {
 
   t(key, ...args) {
     const lang = this.settings.language || "en";
-    let str = TEXTS[lang][key] || TEXTS["en" у][key] || key;
+    let str = TEXTS[lang][key] || TEXTS["en"][key] || key;
     args.forEach((arg, i) => {
       str = str.replace(`{${i}}`, arg);
     });
