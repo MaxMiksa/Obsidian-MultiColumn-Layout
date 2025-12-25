@@ -298,7 +298,12 @@ class MultiColumnLayoutSettingTab extends PluginSettingTab {
     const { containerEl } = this;
     containerEl.empty();
 
+    // Use standard Setting for main title (or just leave it to Obsidian's header)
     containerEl.createEl("h2", { text: this.plugin.t("settings.title") });
+
+    new Setting(containerEl)
+        .setName(this.plugin.t("settings.general"))
+        .setHeading();
 
     new Setting(containerEl)
         .setName(this.plugin.t("settings.language"))
@@ -310,10 +315,13 @@ class MultiColumnLayoutSettingTab extends PluginSettingTab {
             .onChange(async (value) => {
                 this.plugin.settings.language = value;
                 await this.plugin.saveSettings();
-                this.display(); // Refresh settings tab to show new language
+                // Force refresh the display to apply new language
+                this.display(); 
             }));
 
-    containerEl.createEl("h3", { text: this.plugin.t("settings.vertical") });
+    new Setting(containerEl)
+        .setName(this.plugin.t("settings.vertical"))
+        .setHeading();
 
     new Setting(containerEl)
         .setName(this.plugin.t("settings.width"))
@@ -342,7 +350,9 @@ class MultiColumnLayoutSettingTab extends PluginSettingTab {
 
     this.addColorDropdown(containerEl, "dividerColor", this.plugin.t("settings.color"), this.plugin.t("settings.color.desc"));
 
-    containerEl.createEl("h3", { text: this.plugin.t("settings.horizontal") });
+    new Setting(containerEl)
+        .setName(this.plugin.t("settings.horizontal"))
+        .setHeading();
 
     new Setting(containerEl)
         .setName(this.plugin.t("settings.horz.enable"))
