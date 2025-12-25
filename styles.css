@@ -4,6 +4,13 @@
   border: none;
   padding: 0;
   margin: 0 0 1rem 0;
+  /* Default CSS variables, will be overridden by plugin settings */
+  --mcl-divider-width: 1px;
+  --mcl-divider-style: solid;
+  --mcl-divider-color: var(--background-modifier-border);
+  --mcl-horz-divider-width: 1px;
+  --mcl-horz-divider-style: solid;
+  --mcl-horz-divider-color: var(--background-modifier-border);
 }
 
 .callout[data-callout="multi-column"] > .callout-title {
@@ -43,19 +50,19 @@
   }
 }
 
-/* Ensure callout titles stay visible in source mode to avoid cursor jump */
+/* Ensure callout titles stay visible in source mode */
 .markdown-source-view.mod-cm6:not(.is-live-preview) .callout[data-callout="multi-column"] > .callout-title,
 .markdown-source-view.mod-cm6:not(.is-live-preview) .callout[data-callout="col"] > .callout-title {
   display: flex;
 }
 
-/* Bordered Multi-Column Variant */
+/* Vertical Dividers (Bordered Variant) */
 .callout[data-callout="multi-column"][data-callout-metadata*="bordered"] > .callout-content {
-  gap: 0; /* Remove gap to handle borders cleanly */
+  gap: 0;
 }
 
 .callout[data-callout="multi-column"][data-callout-metadata*="bordered"] > .callout-content > .callout[data-callout="col"] {
-  border-right: 1px solid var(--background-modifier-border);
+  border-right: var(--mcl-divider-width) var(--mcl-divider-style) var(--mcl-divider-color);
   padding-left: 1rem;
   padding-right: 1rem;
 }
@@ -69,8 +76,18 @@
   padding-right: 0;
 }
 
+/* Horizontal Dividers */
+.callout[data-callout="multi-column"][data-callout-metadata*="horizontal"] {
+  border-top: var(--mcl-horz-divider-width) var(--mcl-horz-divider-style) var(--mcl-horz-divider-color) !important;
+  border-bottom: var(--mcl-horz-divider-width) var(--mcl-horz-divider-style) var(--mcl-horz-divider-color) !important;
+  padding-top: 1rem;
+  padding-bottom: 1rem;
+}
+
 .callout[data-callout="col"][data-callout-metadata="1"] { flex: 0 0 1%; }
 .callout[data-callout="col"][data-callout-metadata="2"] { flex: 0 0 2%; }
+/* ... (abbreviated for brevity, assuming the rest of percentages exist) ... */
+
 .callout[data-callout="col"][data-callout-metadata="3"] { flex: 0 0 3%; }
 .callout[data-callout="col"][data-callout-metadata="4"] { flex: 0 0 4%; }
 .callout[data-callout="col"][data-callout-metadata="5"] { flex: 0 0 5%; }
