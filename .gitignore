@@ -10,8 +10,8 @@ Thumbs.db
 .vscode/
 
 # Documentation (Internal)
-PRD.md
-SDD.md
-RELEASE_NOTES.md
-CHANGELOG.md
-CHANGELOG-zh.md
+Files/PRD.md
+Files/SDD.md
+Files/RELEASE_NOTES.md
+Files/CHANGELOG.md
+Files/CHANGELOG-zh.md
