@@ -15,39 +15,15 @@ class MultiColumnLayoutPlugin extends Plugin {
 
   addInsertMenu(menu, editor) {
     menu.addItem((item) => {
-      item.setTitle("Insert Multi-Column");
-      item.setIcon("layout-grid");
+      item.setTitle("2 Columns + Divider");
+      item.setIcon("columns");
+      item.onClick(() => this.safeInsert(editor, 2, undefined, "bordered"));
+    });
 
-      const subMenu = item.setSubmenu();
-
-      subMenu.addItem((subItem) => {
-        subItem.setTitle("2 Columns (50/50)");
-        subItem.onClick(() => this.safeInsert(editor, 2));
-      });
-
-      subMenu.addItem((subItem) => {
-        subItem.setTitle("Sidebar Left (30/70)");
-        subItem.onClick(() => this.safeInsert(editor, 2, [30, 70]));
-      });
-
-      subMenu.addItem((subItem) => {
-        subItem.setTitle("3 Columns (33/34/33)");
-        subItem.onClick(() => this.safeInsert(editor, 3, [33, 34, 33]));
-      });
-
-      subMenu.addSeparator();
-
-      subMenu.addItem((subItem) => {
-        subItem.setTitle("2 Columns + Divider");
-        subItem.setIcon("columns");
-        subItem.onClick(() => this.safeInsert(editor, 2, undefined, "bordered"));
-      });
-
-      subMenu.addItem((subItem) => {
-        subItem.setTitle("3 Columns + Divider");
-        subItem.setIcon("columns");
-        subItem.onClick(() => this.safeInsert(editor, 3, [33, 34, 33], "bordered"));
-      });
+    menu.addItem((item) => {
+      item.setTitle("3 Columns + Divider");
+      item.setIcon("columns");
+      item.onClick(() => this.safeInsert(editor, 3, [33, 34, 33], "bordered"));
     });
   }
 
