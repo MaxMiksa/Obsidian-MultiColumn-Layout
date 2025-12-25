@@ -1,0 +1,17 @@
+# Dependencies
+node_modules/
+
+# System
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+
+# Documentation (Internal)
+PRD.md
+SDD.md
+RELEASE_NOTES.md
+CHANGELOG.md
+CHANGELOG-zh.md

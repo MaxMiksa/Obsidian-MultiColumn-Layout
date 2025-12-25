@@ -1,0 +1,150 @@
+﻿/* Multi-Column Layout base styles */
+.callout[data-callout="multi-column"] {
+  background: transparent;
+  border: none;
+  padding: 0;
+  margin: 0 0 1rem 0;
+}
+
+.callout[data-callout="multi-column"] > .callout-title {
+  display: none;
+}
+
+.callout[data-callout="multi-column"] > .callout-content {
+  display: flex;
+  width: 100%;
+  padding: 0;
+  margin: 0;
+  gap: var(--multi-column-gap, 1rem);
+  align-items: stretch;
+}
+
+.callout[data-callout="col"] {
+  flex: 1 1 0;
+  min-width: 0;
+  background: transparent;
+  border: none;
+  padding: 0;
+  margin: 0;
+}
+
+.callout[data-callout="col"] > .callout-title {
+  display: none;
+}
+
+.callout[data-callout="col"] > .callout-content {
+  padding: 0;
+  margin: 0;
+}
+
+@media (max-width: 768px) {
+  .callout[data-callout="multi-column"] > .callout-content {
+    flex-direction: column;
+  }
+}
+
+/* Ensure callout titles stay visible in source mode to avoid cursor jump */
+.markdown-source-view.mod-cm6:not(.is-live-preview) .callout[data-callout="multi-column"] > .callout-title,
+.markdown-source-view.mod-cm6:not(.is-live-preview) .callout[data-callout="col"] > .callout-title {
+  display: flex;
+}
+.callout[data-callout="col"][data-callout-metadata="1"] { flex: 0 0 1%; }
+.callout[data-callout="col"][data-callout-metadata="2"] { flex: 0 0 2%; }
+.callout[data-callout="col"][data-callout-metadata="3"] { flex: 0 0 3%; }
+.callout[data-callout="col"][data-callout-metadata="4"] { flex: 0 0 4%; }
+.callout[data-callout="col"][data-callout-metadata="5"] { flex: 0 0 5%; }
+.callout[data-callout="col"][data-callout-metadata="6"] { flex: 0 0 6%; }
+.callout[data-callout="col"][data-callout-metadata="7"] { flex: 0 0 7%; }
+.callout[data-callout="col"][data-callout-metadata="8"] { flex: 0 0 8%; }
+.callout[data-callout="col"][data-callout-metadata="9"] { flex: 0 0 9%; }
+.callout[data-callout="col"][data-callout-metadata="10"] { flex: 0 0 10%; }
+.callout[data-callout="col"][data-callout-metadata="11"] { flex: 0 0 11%; }
+.callout[data-callout="col"][data-callout-metadata="12"] { flex: 0 0 12%; }
+.callout[data-callout="col"][data-callout-metadata="13"] { flex: 0 0 13%; }
+.callout[data-callout="col"][data-callout-metadata="14"] { flex: 0 0 14%; }
+.callout[data-callout="col"][data-callout-metadata="15"] { flex: 0 0 15%; }
+.callout[data-callout="col"][data-callout-metadata="16"] { flex: 0 0 16%; }
+.callout[data-callout="col"][data-callout-metadata="17"] { flex: 0 0 17%; }
+.callout[data-callout="col"][data-callout-metadata="18"] { flex: 0 0 18%; }
+.callout[data-callout="col"][data-callout-metadata="19"] { flex: 0 0 19%; }
+.callout[data-callout="col"][data-callout-metadata="20"] { flex: 0 0 20%; }
+.callout[data-callout="col"][data-callout-metadata="21"] { flex: 0 0 21%; }
+.callout[data-callout="col"][data-callout-metadata="22"] { flex: 0 0 22%; }
+.callout[data-callout="col"][data-callout-metadata="23"] { flex: 0 0 23%; }
+.callout[data-callout="col"][data-callout-metadata="24"] { flex: 0 0 24%; }
+.callout[data-callout="col"][data-callout-metadata="25"] { flex: 0 0 25%; }
+.callout[data-callout="col"][data-callout-metadata="26"] { flex: 0 0 26%; }
+.callout[data-callout="col"][data-callout-metadata="27"] { flex: 0 0 27%; }
+.callout[data-callout="col"][data-callout-metadata="28"] { flex: 0 0 28%; }
+.callout[data-callout="col"][data-callout-metadata="29"] { flex: 0 0 29%; }
+.callout[data-callout="col"][data-callout-metadata="30"] { flex: 0 0 30%; }
+.callout[data-callout="col"][data-callout-metadata="31"] { flex: 0 0 31%; }
+.callout[data-callout="col"][data-callout-metadata="32"] { flex: 0 0 32%; }
+.callout[data-callout="col"][data-callout-metadata="33"] { flex: 0 0 33%; }
+.callout[data-callout="col"][data-callout-metadata="34"] { flex: 0 0 34%; }
+.callout[data-callout="col"][data-callout-metadata="35"] { flex: 0 0 35%; }
+.callout[data-callout="col"][data-callout-metadata="36"] { flex: 0 0 36%; }
+.callout[data-callout="col"][data-callout-metadata="37"] { flex: 0 0 37%; }
+.callout[data-callout="col"][data-callout-metadata="38"] { flex: 0 0 38%; }
+.callout[data-callout="col"][data-callout-metadata="39"] { flex: 0 0 39%; }
+.callout[data-callout="col"][data-callout-metadata="40"] { flex: 0 0 40%; }
+.callout[data-callout="col"][data-callout-metadata="41"] { flex: 0 0 41%; }
+.callout[data-callout="col"][data-callout-metadata="42"] { flex: 0 0 42%; }
+.callout[data-callout="col"][data-callout-metadata="43"] { flex: 0 0 43%; }
+.callout[data-callout="col"][data-callout-metadata="44"] { flex: 0 0 44%; }
+.callout[data-callout="col"][data-callout-metadata="45"] { flex: 0 0 45%; }
+.callout[data-callout="col"][data-callout-metadata="46"] { flex: 0 0 46%; }
+.callout[data-callout="col"][data-callout-metadata="47"] { flex: 0 0 47%; }
+.callout[data-callout="col"][data-callout-metadata="48"] { flex: 0 0 48%; }
+.callout[data-callout="col"][data-callout-metadata="49"] { flex: 0 0 49%; }
+.callout[data-callout="col"][data-callout-metadata="50"] { flex: 0 0 50%; }
+.callout[data-callout="col"][data-callout-metadata="51"] { flex: 0 0 51%; }
+.callout[data-callout="col"][data-callout-metadata="52"] { flex: 0 0 52%; }
+.callout[data-callout="col"][data-callout-metadata="53"] { flex: 0 0 53%; }
+.callout[data-callout="col"][data-callout-metadata="54"] { flex: 0 0 54%; }
+.callout[data-callout="col"][data-callout-metadata="55"] { flex: 0 0 55%; }
+.callout[data-callout="col"][data-callout-metadata="56"] { flex: 0 0 56%; }
+.callout[data-callout="col"][data-callout-metadata="57"] { flex: 0 0 57%; }
+.callout[data-callout="col"][data-callout-metadata="58"] { flex: 0 0 58%; }
+.callout[data-callout="col"][data-callout-metadata="59"] { flex: 0 0 59%; }
+.callout[data-callout="col"][data-callout-metadata="60"] { flex: 0 0 60%; }
+.callout[data-callout="col"][data-callout-metadata="61"] { flex: 0 0 61%; }
+.callout[data-callout="col"][data-callout-metadata="62"] { flex: 0 0 62%; }
+.callout[data-callout="col"][data-callout-metadata="63"] { flex: 0 0 63%; }
+.callout[data-callout="col"][data-callout-metadata="64"] { flex: 0 0 64%; }
+.callout[data-callout="col"][data-callout-metadata="65"] { flex: 0 0 65%; }
+.callout[data-callout="col"][data-callout-metadata="66"] { flex: 0 0 66%; }
+.callout[data-callout="col"][data-callout-metadata="67"] { flex: 0 0 67%; }
+.callout[data-callout="col"][data-callout-metadata="68"] { flex: 0 0 68%; }
+.callout[data-callout="col"][data-callout-metadata="69"] { flex: 0 0 69%; }
+.callout[data-callout="col"][data-callout-metadata="70"] { flex: 0 0 70%; }
+.callout[data-callout="col"][data-callout-metadata="71"] { flex: 0 0 71%; }
+.callout[data-callout="col"][data-callout-metadata="72"] { flex: 0 0 72%; }
+.callout[data-callout="col"][data-callout-metadata="73"] { flex: 0 0 73%; }
+.callout[data-callout="col"][data-callout-metadata="74"] { flex: 0 0 74%; }
+.callout[data-callout="col"][data-callout-metadata="75"] { flex: 0 0 75%; }
+.callout[data-callout="col"][data-callout-metadata="76"] { flex: 0 0 76%; }
+.callout[data-callout="col"][data-callout-metadata="77"] { flex: 0 0 77%; }
+.callout[data-callout="col"][data-callout-metadata="78"] { flex: 0 0 78%; }
+.callout[data-callout="col"][data-callout-metadata="79"] { flex: 0 0 79%; }
+.callout[data-callout="col"][data-callout-metadata="80"] { flex: 0 0 80%; }
+.callout[data-callout="col"][data-callout-metadata="81"] { flex: 0 0 81%; }
+.callout[data-callout="col"][data-callout-metadata="82"] { flex: 0 0 82%; }
+.callout[data-callout="col"][data-callout-metadata="83"] { flex: 0 0 83%; }
+.callout[data-callout="col"][data-callout-metadata="84"] { flex: 0 0 84%; }
+.callout[data-callout="col"][data-callout-metadata="85"] { flex: 0 0 85%; }
+.callout[data-callout="col"][data-callout-metadata="86"] { flex: 0 0 86%; }
+.callout[data-callout="col"][data-callout-metadata="87"] { flex: 0 0 87%; }
+.callout[data-callout="col"][data-callout-metadata="88"] { flex: 0 0 88%; }
+.callout[data-callout="col"][data-callout-metadata="89"] { flex: 0 0 89%; }
+.callout[data-callout="col"][data-callout-metadata="90"] { flex: 0 0 90%; }
+.callout[data-callout="col"][data-callout-metadata="91"] { flex: 0 0 91%; }
+.callout[data-callout="col"][data-callout-metadata="92"] { flex: 0 0 92%; }
+.callout[data-callout="col"][data-callout-metadata="93"] { flex: 0 0 93%; }
+.callout[data-callout="col"][data-callout-metadata="94"] { flex: 0 0 94%; }
+.callout[data-callout="col"][data-callout-metadata="95"] { flex: 0 0 95%; }
+.callout[data-callout="col"][data-callout-metadata="96"] { flex: 0 0 96%; }
+.callout[data-callout="col"][data-callout-metadata="97"] { flex: 0 0 97%; }
+.callout[data-callout="col"][data-callout-metadata="98"] { flex: 0 0 98%; }
+.callout[data-callout="col"][data-callout-metadata="99"] { flex: 0 0 99%; }
+.callout[data-callout="col"][data-callout-metadata="100"] { flex: 0 0 100%; }
