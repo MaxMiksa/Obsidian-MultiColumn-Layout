@@ -17,7 +17,7 @@ class MultiColumnLayoutPlugin extends Plugin {
     menu.addItem((item) => {
       item.setTitle("2 Columns + Divider");
       item.setIcon("columns");
-      item.onClick(() => this.safeInsert(editor, 2, undefined, "bordered"));
+      item.onClick(() => this.safeInsert(editor, 2, [50, 50], "bordered"));
     });
 
     menu.addItem((item) => {
