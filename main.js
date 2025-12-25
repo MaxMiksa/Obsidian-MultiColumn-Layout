@@ -8,19 +8,24 @@ const DEFAULT_SETTINGS = {
   horzDivider: false,
   horzDividerWidth: "1px",
   horzDividerStyle: "solid",
-  horzDividerColor: "gray"
+  horzDividerColor: "gray",
+  backgroundColor: "none",
+  borderEnabled: false,
+  borderWidth: "1px",
+  borderRadius: "0"
 };
 
 const PRESET_COLORS = {
-  "gray": "#7d7d7d",
-  "red": "#e93030",
-  "orange": "#e9973f",
-  "yellow": "#e0de71",
-  "green": "#44cf6e",
-  "cyan": "#53dfdd",
-  "blue": "#3875d7",
-  "purple": "#945ecf",
-  "black": "#000000",
+  "none": "transparent",
+  "gray": "#cfd3d7",
+  "red": "#f4a5a5",
+  "orange": "#f7c48f",
+  "yellow": "#f5f1a6",
+  "green": "#8fddb0",
+  "cyan": "#95eded",
+  "blue": "#9cbcf2",
+  "purple": "#c8acef",
+  "black": "#4a4a4a",
   "white": "#ffffff"
 };
 
@@ -30,18 +35,48 @@ const TEXTS = {
     "settings.general": "General",
     "settings.language": "Language",
     "settings.language.desc": "Choose the display language for the plugin.",
+    "settings.background": "Background Color",
+    "settings.background.desc": "Background color for the multi-column container.",
+    "settings.border": "Container Border",
+    "settings.border.enable": "Show Border",
+    "settings.border.enable.desc": "Draw a border around the multi-column container. Border color follows background (slightly darker).",
+    "settings.border.width": "Border Width",
+    "settings.border.radius": "Corner Radius",
+    "colors.none": "Transparent",
+    "colors.gray": "Gray",
+    "colors.red": "Red",
+    "colors.orange": "Orange",
+    "colors.yellow": "Yellow",
+    "colors.green": "Green",
+    "colors.cyan": "Cyan",
+    "colors.blue": "Blue",
+    "colors.purple": "Purple",
+    "colors.black": "Black",
+    "colors.white": "White",
     "settings.vertical": "Vertical Dividers (Bordered)",
     "settings.horizontal": "Horizontal Dividers",
     "settings.width": "Width",
     "settings.width.desc": "Width of the line (e.g., 1px, 2px).",
     "settings.style": "Style",
     "settings.style.desc": "Style of the line.",
+    "style.solid": "Solid",
+    "style.dashed": "Dashed",
+    "style.dotted": "Dotted",
+    "style.double": "Double",
     "settings.color": "Color",
     "settings.color.desc": "Color of the line.",
     "settings.horz.enable": "Enable Horizontal Dividers",
     "settings.horz.enable.desc": "Automatically add top and bottom borders to NEW inserted layouts.",
-    "menu.2col": "2 Columns + Divider",
-    "menu.3col": "3 Columns + Divider",
+    "settings.migrate": "Apply current appearance to all existing layouts",
+    "settings.migrate.desc": "Migrates every multi-column callout in your vault to use the current bordered/horizontal flags. This updates old notes for a consistent look.",
+    "settings.migrate.running": "Applying appearance to existing layouts...",
+    "settings.migrate.done": "Updated {0} file(s).",
+    "settings.migrate.error": "Failed to apply appearance. See console for details.",
+    "menu.2col": "2 Columns",
+    "menu.3col": "3 Columns",
+    "menu.nested": "Nested Columns",
+    "menu.nested.2col": "Parent + Nested 2 Columns",
+    "menu.nested.3col": "Parent + Nested 3 Columns",
     "menu.custom": "Custom Layout...",
     "modal.title": "Custom Column Ratios",
     "modal.instruction": "Enter ratios separated by slashes (e.g. 30/70 or 20/30/50). Sum must be 100.",
@@ -50,28 +85,58 @@ const TEXTS = {
     "modal.error.sum": "Sum is {0}%, but must be 100%."
   },
   zh: {
-    "settings.title": "多栏布局设置",
+    "settings.title": "多列布局设置",
     "settings.general": "常规",
     "settings.language": "语言",
     "settings.language.desc": "选择插件显示的语言。",
-    "settings.vertical": "竖直分割线",
+    "settings.background": "背景颜色",
+    "settings.background.desc": "多列布局容器的背景颜色。",
+    "settings.border": "边框",
+    "settings.border.enable": "显示边框",
+    "settings.border.enable.desc": "为多列容器绘制边框，颜色与背景一致但略深。",
+    "settings.border.width": "边框宽度",
+    "settings.border.radius": "圆角半径",
+    "colors.none": "透明",
+    "colors.gray": "灰色",
+    "colors.red": "红色",
+    "colors.orange": "橙色",
+    "colors.yellow": "黄色",
+    "colors.green": "绿色",
+    "colors.cyan": "青色",
+    "colors.blue": "蓝色",
+    "colors.purple": "紫色",
+    "colors.black": "深灰",
+    "colors.white": "白色",
+    "settings.vertical": "垂直分割线",
     "settings.horizontal": "水平分割线",
     "settings.width": "宽度",
-    "settings.width.desc": "线条的粗细（例如 1px, 2px）。",
+    "settings.width.desc": "线条宽度（例如 1px, 2px）。",
     "settings.style": "样式",
-    "settings.style.desc": "线条的类型。",
+    "settings.style.desc": "线条样式。",
+    "style.solid": "实线",
+    "style.dashed": "虚线",
+    "style.dotted": "点线",
+    "style.double": "双线",
     "settings.color": "颜色",
-    "settings.color.desc": "线条的颜色。",
+    "settings.color.desc": "线条颜色。",
     "settings.horz.enable": "启用水平分割线",
-    "settings.horz.enable.desc": "在插入新布局时自动添加上下边框。",
-    "menu.2col": "2栏 + 分割线",
-    "menu.3col": "3栏 + 分割线",
-    "menu.custom": "自定义布局...",
-    "modal.title": "自定义分栏比例",
-    "modal.instruction": "输入以斜杠分隔的比例（例如 30/70 或 20/30/50）。总和必须为 100。",
+    "settings.horz.enable.desc": "在新插入的布局上自动添加上下边框。",
+    "settings.migrate": "将当前外观应用于所有已写布局",
+    "settings.migrate.desc": "把当前的分割线风格同步到库里已有的 multi-column callout，确保统一显示。",
+    "settings.migrate.running": "正在应用到已有布局…",
+    "settings.migrate.done": "已更新 {0} 个文件。",
+    "settings.migrate.error": "应用外观失败，请查看控制台日志。",
+    "menu.2col": "2 列",
+    "menu.3col": "3 列",
+    "menu.nested": "子分栏（分栏中嵌套分栏）",
+    "menu.nested.2col": "父列 + 子分栏 2 列",
+    "menu.nested.3col": "父列 + 子分栏 3 列",
+    "menu.custom": "自定义分栏...",
+    "modal.title": "自定义列比例",
+    "modal.instruction": "用斜杠分隔比例（例如 30/70 或 20/30/50），总和必须是 100。",
     "modal.insert": "插入布局",
-    "modal.error.format": "格式无效。请使用斜杠分隔数字。",
-    "modal.error.sum": "当前总和为 {0}%，但必须是 100%。"
+    "modal.error.format": "格式无效，请用数字加斜杠。",
+    "modal.error.sum": "当前总和为 {0}% ，必须是 100%。"
   }
 };
 
@@ -102,6 +167,10 @@ class MultiColumnLayoutPlugin extends Plugin {
     return str;
   }
 
+  colorLabel(key) {
+    return this.t(`colors.${key}`) || key;
+  }
+
   async loadSettings() {
     this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
   }
@@ -113,17 +182,45 @@ class MultiColumnLayoutPlugin extends Plugin {
 
   applySettingsStyles() {
     const style = document.body.style;
-    
+
     const vColor = PRESET_COLORS[this.settings.dividerColor] || this.settings.dividerColor;
     const hColor = PRESET_COLORS[this.settings.horzDividerColor] || this.settings.horzDividerColor;
+
+    const baseColor = PRESET_COLORS[this.settings.backgroundColor] || this.settings.backgroundColor;
+
+    const hexMatch = typeof baseColor === "string" && baseColor.startsWith("#") && baseColor.length === 7;
+    const toRGBA = (hex, alpha) => {
+      const r = parseInt(hex.slice(1, 3), 16);
+      const g = parseInt(hex.slice(3, 5), 16);
+      const b = parseInt(hex.slice(5, 7), 16);
+      return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+    };
+    let bgColor = baseColor;
+    let borderColor = baseColor;
+
+    if (hexMatch) {
+      bgColor = toRGBA(baseColor, 0.13); // slightly stronger background
+      borderColor = toRGBA(baseColor, 0.26); // border a bit heavier than background
+    } else {
+      bgColor = baseColor || "transparent";
+      borderColor = baseColor || "transparent";
+    }
+
+    const borderWidth = this.settings.borderEnabled ? this.settings.borderWidth : "0";
+    const borderRadius = this.settings.borderRadius || "0";
 
     style.setProperty("--mcl-divider-width", this.settings.dividerWidth);
     style.setProperty("--mcl-divider-style", this.settings.dividerStyle);
     style.setProperty("--mcl-divider-color", vColor);
-    
+
     style.setProperty("--mcl-horz-divider-width", this.settings.horzDividerWidth);
     style.setProperty("--mcl-horz-divider-style", this.settings.horzDividerStyle);
     style.setProperty("--mcl-horz-divider-color", hColor);
+
+    style.setProperty("--mcl-background-color", bgColor);
+    style.setProperty("--mcl-border-color", borderColor || "transparent");
+    style.setProperty("--mcl-border-width", borderWidth);
+    style.setProperty("--mcl-border-radius", borderRadius);
   }
 
   addInsertMenu(menu, editor) {
@@ -137,6 +234,25 @@ class MultiColumnLayoutPlugin extends Plugin {
       item.setTitle(this.t("menu.3col"));
       item.setIcon("columns");
       item.onClick(() => this.safeInsert(editor, 3, [33, 34, 33], "bordered"));
+    });
+
+    menu.addItem((item) => {
+      item.setTitle(this.t("menu.nested"));
+      item.setIcon("layout");
+      
+      const subMenu = item.setSubmenu();
+
+      subMenu.addItem((subItem) => {
+        subItem.setTitle(this.t("menu.nested.2col"));
+        subItem.setIcon("columns");
+        subItem.onClick(() => this.safeInsertNested(editor, 2));
+      });
+
+      subMenu.addItem((subItem) => {
+        subItem.setTitle(this.t("menu.nested.3col"));
+        subItem.setIcon("columns");
+        subItem.onClick(() => this.safeInsertNested(editor, 3));
+      });
     });
     
     menu.addSeparator();
@@ -164,6 +280,15 @@ class MultiColumnLayoutPlugin extends Plugin {
     this.insertColumnLayout(activeEditor, cols, ratios, meta);
   }
 
+  safeInsertNested(passedEditor, innerCols) {
+    const activeEditor = this.getActiveEditor() || passedEditor;
+    if (!activeEditor) {
+      console.error("Multi-Column Plugin: No active editor found.");
+      return;
+    }
+    this.insertNestedLayout(activeEditor, innerCols);
+  }
+
   getActiveEditor() {
     const view = this.app.workspace.getActiveViewOfType(MarkdownView);
     return view ? view.editor : null;
@@ -177,7 +302,7 @@ class MultiColumnLayoutPlugin extends Plugin {
     const metaParts = [];
     if (metadata) metaParts.push(metadata);
     if (this.settings.horzDivider) metaParts.push("horizontal");
-    
+
     const metaStr = metaParts.length > 0 ? `|${metaParts.join("|")}` : "";
 
     const lines = [];
@@ -195,16 +320,80 @@ class MultiColumnLayoutPlugin extends Plugin {
     }
 
     const block = lines.join("\n") + "\n";
-    
+
     try {
-        const cursor = editor.getCursor();
-        editor.replaceSelection(block);
-        const target = { line: cursor.line + 3, ch: 3 };
-        editor.setCursor(target);
-        editor.focus();
+      const cursor = editor.getCursor();
+      editor.replaceSelection(block);
+      const target = { line: cursor.line + 3, ch: 3 };
+      editor.setCursor(target);
+      editor.focus();
     } catch (err) {
-        console.error("Multi-Column Plugin: Failed to insert text", err);
+      console.error("Multi-Column Plugin: Failed to insert text", err);
     }
+  }
+
+  insertNestedLayout(editor, innerCols) {
+    if (!editor) return;
+    editor.focus();
+
+    const outerMetaParts = ["bordered"];
+    if (this.settings.horzDivider) outerMetaParts.push("horizontal");
+    const outerMetaStr = outerMetaParts.length ? `|${outerMetaParts.join("|")}` : "";
+
+    const innerMetaParts = ["bordered"];
+    if (this.settings.horzDivider) innerMetaParts.push("horizontal");
+    const innerMetaStr = innerMetaParts.length ? `|${innerMetaParts.join("|")}` : "";
+
+    const outerRatios = [40, 60];
+    const innerRatios = this.buildDefaultRatios(innerCols);
+
+    const lines = [];
+    lines.push(`> [!multi-column${outerMetaStr}]`);
+    lines.push(">");
+
+    lines.push(`>> [!col|${outerRatios[0]}]`);
+    lines.push(">> ## Parent Column");
+    lines.push(">> - Add your content here.");
+    lines.push(">");
+
+    lines.push(`>> [!col|${outerRatios[1]}]`);
+    lines.push(">> ## Nested Columns");
+    lines.push(">>");
+    lines.push(`>>> [!multi-column${innerMetaStr}]`);
+    lines.push(">>>");
+
+    for (let i = 0; i < innerCols; i++) {
+      const ratio = innerRatios[i];
+      const colMeta = typeof ratio === "number" ? `|${ratio}` : "";
+      lines.push(`>>>> [!col${colMeta}]`);
+      lines.push(">>>> ");
+      if (i < innerCols - 1) {
+        lines.push(">>>");
+      }
+    }
+
+    const block = lines.join("\n") + "\n";
+
+    try {
+      const cursor = editor.getCursor();
+      editor.replaceSelection(block);
+      const target = { line: cursor.line + 7, ch: 4 };
+      editor.setCursor(target);
+      editor.focus();
+    } catch (err) {
+      console.error("Multi-Column Plugin: Failed to insert nested layout", err);
+    }
+  }
+
+  buildDefaultRatios(count) {
+    if (!count || count < 1) return [];
+    const base = Math.floor(100 / count);
+    const ratios = new Array(count).fill(base);
+    const remainder = 100 - base * count;
+    if (remainder !== 0) {
+      ratios[ratios.length - 1] += remainder;
+    }
+    return ratios;
   }
 
   applyColumnWidths(el) {
@@ -218,74 +407,114 @@ class MultiColumnLayoutPlugin extends Plugin {
       }
     });
   }
+
+  /**
+   * Apply current appearance flags (bordered/horizontal) to all existing multi-column callouts in the vault.
+   */
+  async applyAppearanceToAllFiles() {
+    const files = this.app.vault.getMarkdownFiles();
+    let updated = 0;
+
+    for (const file of files) {
+      const content = await this.app.vault.read(file);
+      const migrated = this.migrateContent(content);
+      if (migrated !== content) {
+        await this.app.vault.modify(file, migrated);
+        updated++;
+      }
+    }
+
+    return updated;
+  }
+
+  migrateContent(content) {
+    const hasHorizontal = !!this.settings.horzDivider;
+
+    return content.replace(/^(\s*>\s*\[!multi-column)([^\]]*)(\])/gm, (_m, prefix, metaStr, suffix) => {
+      const metaRaw = metaStr || "";
+      const parts = metaRaw.startsWith("|")
+        ? metaRaw.slice(1).split("|").filter(Boolean)
+        : [];
+
+      // Ensure bordered flag exists.
+      if (!parts.includes("bordered")) parts.push("bordered");
+
+      // Apply horizontal flag based on current setting.
+      const filtered = parts.filter((p) => p !== "horizontal");
+      if (hasHorizontal) filtered.push("horizontal");
+
+      const rebuilt = filtered.length > 0 ? `|${filtered.join("|")}` : "";
+      return `${prefix}${rebuilt}${suffix}`;
+    });
+  }
 }
 
 class CustomRatioModal extends Modal {
-    constructor(app, plugin, onSubmit) {
-        super(app);
-        this.plugin = plugin;
-        this.onSubmit = onSubmit;
-    }
+  constructor(app, plugin, onSubmit) {
+    super(app);
+    this.plugin = plugin;
+    this.onSubmit = onSubmit;
+  }
 
-    onOpen() {
-        const { contentEl } = this;
-        contentEl.createEl("h2", { text: this.plugin.t("modal.title") });
+  onOpen() {
+    const { contentEl } = this;
+    contentEl.createEl("h2", { text: this.plugin.t("modal.title") });
 
-        const instruction = contentEl.createEl("p", { text: this.plugin.t("modal.instruction") });
-        instruction.style.color = "var(--text-muted)";
-        instruction.style.marginBottom = "1rem";
+    const instruction = contentEl.createEl("p", { text: this.plugin.t("modal.instruction") });
+    instruction.style.color = "var(--text-muted)";
+    instruction.style.marginBottom = "1rem";
 
-        const inputContainer = contentEl.createDiv();
-        const input = inputContainer.createEl("input", { type: "text", placeholder: "50/50" });
-        input.style.width = "100%";
-        input.focus();
+    const inputContainer = contentEl.createDiv();
+    const input = inputContainer.createEl("input", { type: "text", placeholder: "50/50" });
+    input.style.width = "100%";
+    input.focus();
 
-        const errorMsg = contentEl.createEl("p", { text: "" });
-        errorMsg.style.color = "var(--text-error)";
-        errorMsg.style.marginTop = "0.5rem";
-        errorMsg.style.display = "none";
+    const errorMsg = contentEl.createEl("p", { text: "" });
+    errorMsg.style.color = "var(--text-error)";
+    errorMsg.style.marginTop = "0.5rem";
+    errorMsg.style.display = "none";
 
-        const btnContainer = contentEl.createDiv();
-        btnContainer.style.marginTop = "1rem";
-        btnContainer.style.display = "flex";
-        btnContainer.style.justifyContent = "flex-end";
+    const btnContainer = contentEl.createDiv();
+    btnContainer.style.marginTop = "1rem";
+    btnContainer.style.display = "flex";
+    btnContainer.style.justifyContent = "flex-end";
 
-        const submitBtn = btnContainer.createEl("button", { text: this.plugin.t("modal.insert") });
-        submitBtn.addClass("mod-cta");
+    const submitBtn = btnContainer.createEl("button", { text: this.plugin.t("modal.insert") });
+    submitBtn.addClass("mod-cta");
 
-        const validateAndSubmit = () => {
-            const val = input.value.trim();
-            if (!val) return;
+    const validateAndSubmit = () => {
+      const val = input.value.trim();
+      if (!val) return;
 
-            const parts = val.split("/").map(p => parseInt(p.trim(), 10));
-            const sum = parts.reduce((a, b) => a + (isNaN(b) ? 0 : b), 0);
+      const parts = val.split("/").map((p) => parseInt(p.trim(), 10));
+      const sum = parts.reduce((a, b) => a + (isNaN(b) ? 0 : b), 0);
 
-            if (parts.some(isNaN)) {
-                errorMsg.text = this.plugin.t("modal.error.format");
-                errorMsg.style.display = "block";
-                return;
-            }
+      if (parts.some(isNaN)) {
+        errorMsg.text = this.plugin.t("modal.error.format");
+        errorMsg.style.display = "block";
+        return;
+      }
 
-            if (sum !== 100) {
-                errorMsg.text = this.plugin.t("modal.error.sum", sum);
-                errorMsg.style.display = "block";
-                return;
-            }
+      if (sum !== 100) {
+        errorMsg.text = this.plugin.t("modal.error.sum", sum);
+        errorMsg.style.display = "block";
+        return;
+      }
 
-            this.onSubmit(parts.length, parts);
-            this.close();
-        };
+      this.onSubmit(parts.length, parts);
+      this.close();
+    };
 
-        submitBtn.onclick = validateAndSubmit;
-        input.addEventListener("keydown", (e) => {
-            if (e.key === "Enter") validateAndSubmit();
-        });
-    }
+    submitBtn.onclick = validateAndSubmit;
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") validateAndSubmit();
+    });
+  }
 
-    onClose() {
-        const { contentEl } = this;
-        contentEl.empty();
-    }
+  onClose() {
+    const { contentEl } = this;
+    contentEl.empty();
+  }
 }
 
 class MultiColumnLayoutSettingTab extends PluginSettingTab {
@@ -298,112 +527,203 @@ class MultiColumnLayoutSettingTab extends PluginSettingTab {
     const { containerEl } = this;
     containerEl.empty();
 
-    // Use standard Setting for main title (or just leave it to Obsidian's header)
     containerEl.createEl("h2", { text: this.plugin.t("settings.title") });
 
-    new Setting(containerEl)
-        .setName(this.plugin.t("settings.general"))
-        .setHeading();
+    new Setting(containerEl).setName(this.plugin.t("settings.general")).setHeading();
 
     new Setting(containerEl)
-        .setName(this.plugin.t("settings.language"))
-        .setDesc(this.plugin.t("settings.language.desc"))
-        .addDropdown(dropdown => dropdown
-            .addOption("en", "English")
-            .addOption("zh", "简体中文")
-            .setValue(this.plugin.settings.language)
-            .onChange(async (value) => {
-                this.plugin.settings.language = value;
-                await this.plugin.saveSettings();
-                // Force refresh the display to apply new language
-                this.display(); 
-            }));
+      .setName(this.plugin.t("settings.language"))
+      .setDesc(this.plugin.t("settings.language.desc"))
+      .addDropdown((dropdown) =>
+        dropdown
+          .addOption("en", "English")
+          .addOption("zh", "简体中文")
+          .setValue(this.plugin.settings.language)
+          .onChange(async (value) => {
+            this.plugin.settings.language = value;
+            await this.plugin.saveSettings();
+            this.display();
+          })
+      );
+    
+    this.addColorDropdown(containerEl, "backgroundColor", this.plugin.t("settings.background"), this.plugin.t("settings.background.desc"));
+
+    new Setting(containerEl).setName(this.plugin.t("settings.border")).setHeading();
 
     new Setting(containerEl)
-        .setName(this.plugin.t("settings.vertical"))
-        .setHeading();
+      .setName(this.plugin.t("settings.border.enable"))
+      .setDesc(this.plugin.t("settings.border.enable.desc"))
+      .addToggle((toggle) =>
+        toggle
+          .setValue(this.plugin.settings.borderEnabled)
+          .onChange(async (value) => {
+            this.plugin.settings.borderEnabled = value;
+            await this.plugin.saveSettings();
+          })
+      );
+
+    this.addPixelControl(
+      containerEl,
+      "borderWidth",
+      this.plugin.t("settings.border.width"),
+      ""
+    );
+
+    this.addPixelControl(
+      containerEl,
+      "borderRadius",
+      this.plugin.t("settings.border.radius"),
+      "",
+      { min: 0, max: 2, step: 0.1, unit: "rem" }
+    );
+
+    new Setting(containerEl).setName(this.plugin.t("settings.vertical")).setHeading();
+
+    this.addPixelControl(
+      containerEl,
+      "dividerWidth",
+      this.plugin.t("settings.width"),
+      this.plugin.t("settings.width.desc")
+    );
 
     new Setting(containerEl)
-        .setName(this.plugin.t("settings.width"))
-        .setDesc(this.plugin.t("settings.width.desc"))
-        .addText(text => text
-            .setPlaceholder("1px")
-            .setValue(this.plugin.settings.dividerWidth)
-            .onChange(async (value) => {
-                this.plugin.settings.dividerWidth = value;
-                await this.plugin.saveSettings();
-            }));
-
-    new Setting(containerEl)
-        .setName(this.plugin.t("settings.style"))
-        .setDesc(this.plugin.t("settings.style.desc"))
-        .addDropdown(dropdown => dropdown
-            .addOption("solid", "Solid")
-            .addOption("dashed", "Dashed")
-            .addOption("dotted", "Dotted")
-            .addOption("double", "Double")
-            .setValue(this.plugin.settings.dividerStyle)
-            .onChange(async (value) => {
-                this.plugin.settings.dividerStyle = value;
-                await this.plugin.saveSettings();
-            }));
+      .setName(this.plugin.t("settings.style"))
+      .setDesc(this.plugin.t("settings.style.desc"))
+      .addDropdown((dropdown) =>
+        dropdown
+          .addOption("solid", this.plugin.t("style.solid"))
+          .addOption("dashed", this.plugin.t("style.dashed"))
+          .addOption("dotted", this.plugin.t("style.dotted"))
+          .addOption("double", this.plugin.t("style.double"))
+          .setValue(this.plugin.settings.dividerStyle)
+          .onChange(async (value) => {
+            this.plugin.settings.dividerStyle = value;
+            await this.plugin.saveSettings();
+          })
+      );
 
     this.addColorDropdown(containerEl, "dividerColor", this.plugin.t("settings.color"), this.plugin.t("settings.color.desc"));
 
-    new Setting(containerEl)
-        .setName(this.plugin.t("settings.horizontal"))
-        .setHeading();
+    new Setting(containerEl).setName(this.plugin.t("settings.horizontal")).setHeading();
 
     new Setting(containerEl)
-        .setName(this.plugin.t("settings.horz.enable"))
-        .setDesc(this.plugin.t("settings.horz.enable.desc"))
-        .addToggle(toggle => toggle
-            .setValue(this.plugin.settings.horzDivider)
-            .onChange(async (value) => {
-                this.plugin.settings.horzDivider = value;
-                await this.plugin.saveSettings();
-            }));
+      .setName(this.plugin.t("settings.horz.enable"))
+      .setDesc(this.plugin.t("settings.horz.enable.desc"))
+      .addToggle((toggle) =>
+        toggle
+          .setValue(this.plugin.settings.horzDivider)
+          .onChange(async (value) => {
+            this.plugin.settings.horzDivider = value;
+            await this.plugin.saveSettings();
+          })
+      );
+
+    this.addPixelControl(
+      containerEl,
+      "horzDividerWidth",
+      this.plugin.t("settings.width"),
+      ""
+    );
 
     new Setting(containerEl)
-        .setName(this.plugin.t("settings.width"))
-        .addText(text => text
-            .setPlaceholder("1px")
-            .setValue(this.plugin.settings.horzDividerWidth)
-            .onChange(async (value) => {
-                this.plugin.settings.horzDividerWidth = value;
-                await this.plugin.saveSettings();
-            }));
-            
-    new Setting(containerEl)
-        .setName(this.plugin.t("settings.style"))
-        .addDropdown(dropdown => dropdown
-            .addOption("solid", "Solid")
-            .addOption("dashed", "Dashed")
-            .addOption("dotted", "Dotted")
-            .addOption("double", "Double")
-            .setValue(this.plugin.settings.horzDividerStyle)
-            .onChange(async (value) => {
-                this.plugin.settings.horzDividerStyle = value;
-                await this.plugin.saveSettings();
-            }));
-            
+      .setName(this.plugin.t("settings.style"))
+      .addDropdown((dropdown) =>
+        dropdown
+          .addOption("solid", this.plugin.t("style.solid"))
+          .addOption("dashed", this.plugin.t("style.dashed"))
+          .addOption("dotted", this.plugin.t("style.dotted"))
+          .addOption("double", this.plugin.t("style.double"))
+          .setValue(this.plugin.settings.horzDividerStyle)
+          .onChange(async (value) => {
+            this.plugin.settings.horzDividerStyle = value;
+            await this.plugin.saveSettings();
+          })
+      );
+
     this.addColorDropdown(containerEl, "horzDividerColor", this.plugin.t("settings.color"), "");
+
+    const migrateSetting = new Setting(containerEl)
+      .setName(this.plugin.t("settings.migrate"))
+      .setDesc(this.plugin.t("settings.migrate.desc"))
+      .addButton((button) =>
+        button
+          .setButtonText(this.plugin.t("settings.migrate"))
+          .setCta()
+          .onClick(async () => {
+            new Notice(this.plugin.t("settings.migrate.running"));
+            try {
+              const updated = await this.plugin.applyAppearanceToAllFiles();
+              new Notice(this.plugin.t("settings.migrate.done", updated));
+            } catch (err) {
+              console.error(err);
+              new Notice(this.plugin.t("settings.migrate.error"));
+            }
+          })
+      );
+
+    migrateSetting.settingEl.addClass("multi-column-apply-all");
   }
 
   addColorDropdown(containerEl, settingKey, name, desc) {
-      new Setting(containerEl)
-        .setName(name)
-        .setDesc(desc)
-        .addDropdown(dropdown => {
-            Object.keys(PRESET_COLORS).forEach(color => {
-                dropdown.addOption(color, color.charAt(0).toUpperCase() + color.slice(1));
-            });
-            dropdown.setValue(this.plugin.settings[settingKey]);
-            dropdown.onChange(async (value) => {
-                this.plugin.settings[settingKey] = value;
-                await this.plugin.saveSettings();
-            });
+    new Setting(containerEl)
+      .setName(name)
+      .setDesc(desc)
+      .addDropdown((dropdown) => {
+        Object.keys(PRESET_COLORS).forEach((color) => {
+          dropdown.addOption(color, this.plugin.colorLabel(color));
         });
+        dropdown.setValue(this.plugin.settings[settingKey]);
+        dropdown.onChange(async (value) => {
+          this.plugin.settings[settingKey] = value;
+          await this.plugin.saveSettings();
+        });
+      });
+  }
+
+  addPixelControl(containerEl, settingKey, name, desc, opts = {}) {
+    const unit = opts.unit || "px";
+    const min = typeof opts.min === "number" ? opts.min : 0;
+    const max = typeof opts.max === "number" ? opts.max : 10;
+    const step = typeof opts.step === "number" ? opts.step : 0.5;
+
+    const parseNumber = (val) => {
+      const num = parseFloat(String(val || "").replace(/[^0-9.]/g, ""));
+      return Number.isFinite(num) ? num : 0;
+    };
+    const clamp = (num, min, max) => Math.min(max, Math.max(min, num));
+    const current = clamp(parseNumber(this.plugin.settings[settingKey]), min, max);
+
+    const setting = new Setting(containerEl).setName(name);
+    if (desc) setting.setDesc(desc);
+
+    let textRef;
+    let sliderRef;
+    const format = (num) => `${num}${unit}`;
+
+    setting.addSlider((slider) => {
+      sliderRef = slider;
+      slider.setLimits(min, max, step).setValue(current).onChange(async (value) => {
+        const n = clamp(parseFloat(value), min, max);
+        this.plugin.settings[settingKey] = format(n);
+        if (textRef) textRef.setValue(String(n));
+        await this.plugin.saveSettings();
+      });
+    });
+
+    setting.addText((text) => {
+      textRef = text;
+      text.inputEl.type = "number";
+      text.inputEl.min = String(min);
+      text.inputEl.max = String(max);
+      text.inputEl.step = String(step);
+      text.setValue(String(current));
+      text.onChange(async (value) => {
+        const n = clamp(parseNumber(value), min, max);
+        this.plugin.settings[settingKey] = format(n);
+        if (sliderRef) sliderRef.setValue(n);
+        await this.plugin.saveSettings();
+      });
+    });
   }
 }
 

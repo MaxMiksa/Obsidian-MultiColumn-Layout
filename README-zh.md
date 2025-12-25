@@ -10,15 +10,19 @@
 Multi-Column Layout 是一款 Obsidian 插件，旨在通过简单的 Callout 语法实现优雅的并排内容排版。通过右键菜单，您可以瞬间插入预设的多栏布局。
 
 <p align="center">
-  <img src="Presentation/image.png" alt="Multi-Column Layout Demo" width="800">
+  <img src="Presentation/image_v1.5.0.png" alt="Multi-Column Layout Demo" width="800">
+  <br>
+  <a href="Presentation/demo.md">点击查看如何利用本插件的语法生成上方的样式</a>
 </p>
 
 ## ✨ 功能特性
 
 | 功能 | 描述 |
 | :--- | :--- |
-| **🚀 快速插入** | 右键菜单一键插入 50/50, 30/70 或 33/34/33 布局。 |
-| **🎨 自定义宽度** | 使用元数据（如 `[!col|40]`）轻松调整每一栏的宽度比例。 |
+| **🚀 快速插入** | 右键菜单一键插入 2列、3列、侧边栏及**嵌套布局**。 |
+| **🎨 外观样式** | 在设置中自定义背景颜色、边框宽度及圆角风格。 |
+| **🧩 嵌套布局** | 支持在分栏内部再次分栏，构建复杂网格。 |
+| **📐 自定义宽度** | 使用元数据（如 `[!col|40]`）轻松调整每一栏的宽度比例。 |
 | **📺 实时预览** | 支持 Live Preview，在输入时即可看到排版效果。 |
 | **🔗 兼容性强** | 基于标准 Markdown/Callout 语法，即使不安装插件内容依然可读。 |
 
@@ -26,7 +30,7 @@ Multi-Column Layout 是一款 Obsidian 插件，旨在通过简单的 Callout �
 
 1. 在编辑器中 **点击右键**。
 2. 选择 **Insert Multi-Column**。
-3. 选择您需要的布局模板。
+3. 选择您需要的布局模板（如 2 Columns, Nested Columns）。
 4. 在生成的代码块中开始编写内容！
 
 ## 📝 语法指南
@@ -36,18 +40,9 @@ Multi-Column Layout 是一款 Obsidian 插件，旨在通过简单的 Callout �
 - **容器**：使用 `> [!multi-column]` 创建外层容器。
 - **分栏**：在容器内使用 `>> [!col]` 创建分栏。
 - **调整宽度**：在 `col` 后添加管道符和数字即可，例如 `>> [!col|30]` 代表占 30% 宽度。
+- **嵌套布局**：在分栏 `>> [!col]` 内部，可以使用更深层级的 `>>> [!multi-column]` 来创建子分栏。
 
-```markdown
-> [!multi-column]
->
->> [!col]
->> 这是左边的栏目。
->
->> [!col]
->> 这是右边的栏目。
-```
-
-或者自定义宽度（例如 30% / 70%）：
+**基础示例：**
 
 ```markdown
 > [!multi-column]
@@ -59,6 +54,26 @@ Multi-Column Layout 是一款 Obsidian 插件，旨在通过简单的 Callout �
 >> 右侧主要内容区域...
 ```
 
+**嵌套示例：**
+
+```markdown
+> [!multi-column]
+>
+>> [!col]
+>> 左侧栏
+>
+>> [!col]
+>> 右侧栏
+>>
+>>> [!multi-column]
+>>>
+>>>> [!col]
+>>>> 嵌套栏 A
+>>>
+>>>> [!col]
+>>>> 嵌套栏 B
+```
+
 ---
 
 <details>
@@ -67,6 +82,7 @@ Multi-Column Layout 是一款 Obsidian 插件，旨在通过简单的 Callout �
 - 需要 Obsidian v1.5.0 或更高版本。
 - 使用 CSS Flexbox 进行渲染。
 - 语法结构：使用 `> [!multi-column]` 作为容器，`>> [!col]` 作为子栏。
+- 嵌套布局使用更深层级的嵌套：`>> [!col]` 内包含 `>>> [!multi-column]`。
 </details>
 
 <details>

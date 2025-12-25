@@ -1,16 +1,11 @@
 /* Multi-Column Layout base styles */
 .callout[data-callout="multi-column"] {
-  background: transparent;
-  border: none;
+  --mcl-divider-inset: 1rem;
+  background: var(--mcl-background-color, transparent);
+  border: var(--mcl-border-width, 0) solid var(--mcl-border-color, transparent);
+  border-radius: var(--mcl-border-radius, 0);
   padding: 0;
   margin: 0 0 1rem 0;
-  /* Default CSS variables, will be overridden by plugin settings */
-  --mcl-divider-width: 1px;
-  --mcl-divider-style: solid;
-  --mcl-divider-color: var(--background-modifier-border);
-  --mcl-horz-divider-width: 1px;
-  --mcl-horz-divider-style: solid;
-  --mcl-horz-divider-color: var(--background-modifier-border);
 }
 
 .callout[data-callout="multi-column"] > .callout-title {
@@ -31,6 +26,7 @@
   min-width: 0;
   background: transparent;
   border: none;
+  border-radius: 0 !important;
   padding: 0;
   margin: 0;
 }
@@ -42,8 +38,10 @@
 .callout[data-callout="col"] > .callout-content {
   padding: 0;
   margin: 0;
+  border-radius: 0 !important;
 }
 
+/* Prevent container background tinting semi-transparent images */
 @media (max-width: 768px) {
   .callout[data-callout="multi-column"] > .callout-content {
     flex-direction: column;
@@ -59,27 +57,38 @@
 /* Vertical Dividers (Bordered Variant) */
 .callout[data-callout="multi-column"][data-callout-metadata*="bordered"] > .callout-content {
   gap: 0;
+  position: relative;
 }
 
 .callout[data-callout="multi-column"][data-callout-metadata*="bordered"] > .callout-content > .callout[data-callout="col"] {
-  border-right: var(--mcl-divider-width) var(--mcl-divider-style) var(--mcl-divider-color);
+  position: relative;
+  border-right: none;
   padding-left: 1rem;
   padding-right: 1rem;
 }
 
 .callout[data-callout="multi-column"][data-callout-metadata*="bordered"] > .callout-content > .callout[data-callout="col"]:first-child {
-  padding-left: 0;
+  padding-left: 1rem;
 }
 
 .callout[data-callout="multi-column"][data-callout-metadata*="bordered"] > .callout-content > .callout[data-callout="col"]:last-child {
   border-right: none;
-  padding-right: 0;
+  padding-right: 1rem;
+}
+
+.callout[data-callout="multi-column"][data-callout-metadata*="bordered"] > .callout-content > .callout[data-callout="col"]:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  top: var(--mcl-divider-inset, 1rem);
+  bottom: var(--mcl-divider-inset, 1rem);
+  right: 0;
+  border-right: var(--mcl-divider-width, 1px) var(--mcl-divider-style, solid) var(--mcl-divider-color, var(--background-modifier-border));
 }
 
 /* Horizontal Dividers */
 .callout[data-callout="multi-column"][data-callout-metadata*="horizontal"] {
-  border-top: var(--mcl-horz-divider-width) var(--mcl-horz-divider-style) var(--mcl-horz-divider-color) !important;
-  border-bottom: var(--mcl-horz-divider-width) var(--mcl-horz-divider-style) var(--mcl-horz-divider-color) !important;
+  border-top: var(--mcl-horz-divider-width, 1px) var(--mcl-horz-divider-style, solid) var(--mcl-horz-divider-color, var(--background-modifier-border)) !important;
+  border-bottom: var(--mcl-horz-divider-width, 1px) var(--mcl-horz-divider-style, solid) var(--mcl-horz-divider-color, var(--background-modifier-border)) !important;
   padding-top: 1rem;
   padding-bottom: 1rem;
 }
