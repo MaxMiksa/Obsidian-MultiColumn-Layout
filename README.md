@@ -23,6 +23,7 @@ Multi-Column Layout is an Obsidian plugin that simplifies the creation of side-b
 | **🎨 Visual Styling** | Customize background colors, borders, and corner radius in settings. |
 | **🧩 Nested Layouts** | Create complex grids by nesting columns inside columns. |
 | **📐 Custom Widths** | Adjust column widths easily using metadata like `[!col|40]`. |
+| **🖱️ Drag Resize** | Drag dividers in Live Preview to resize columns and write ratios back to `[!col|..]`. |
 | **📺 Live Preview** | See your layouts rendered instantly as you type. |
 | **✍️ In-Column Editing** | In Live Preview, Enter and multi-line paste keep content inside the current column automatically (`>>/>>>>`). |
 | **🔗 Compatibility** | Uses standard Markdown/Callout syntax for maximum portability. |
