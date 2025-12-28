@@ -171,6 +171,11 @@ class MultiColumnLayoutPlugin extends Plugin {
     this.registerEditorExtension(buildMultiColumnEditorExtensions(this));       
   }
 
+  getCM6EditorView(markdownView) {
+    const editorAny = markdownView?.editor as any;
+    return editorAny?.cm?.cm ?? editorAny?.cm ?? editorAny?.editorView ?? null;
+  }
+
   t(key, ...args) {
     const lang = this.settings.language || "en";
     let str = TEXTS[lang][key] || TEXTS["en"][key] || key;
@@ -447,6 +452,9 @@ class MultiColumnLayoutPlugin extends Plugin {
   attachColumnResizers(rootEl, ctx) {
     const containers = rootEl.querySelectorAll('div.callout[data-callout="multi-column"]');
     containers.forEach((container) => {
+      // Only enable drag-to-resize in Live Preview to ensure write-back works and avoid confusion in Reading Mode.
+      if (!container.closest(".markdown-source-view.is-live-preview")) return;
+
       const content = container.querySelector(":scope > .callout-content") || container.querySelector(".callout-content");
       if (!content) return;
       if (content.classList.contains("mcl-resizing")) return;
@@ -504,6 +512,12 @@ class MultiColumnLayoutPlugin extends Plugin {
           const editor = view?.editor ?? null;
           if (!editor || !view?.file || (sourcePath && view.file.path !== sourcePath)) {
             new Notice("Please use Live Preview (editable) to resize columns.");
+            return;
+          }
+
+          const cmView = this.getCM6EditorView(view);
+          if (!cmView?.posAtCoords) {
+            new Notice("Resize write-back requires Live Preview (CodeMirror 6).");
             return;
           }
 
@@ -566,9 +580,11 @@ class MultiColumnLayoutPlugin extends Plugin {
               return;
             }
 
+            const pos = cmView.posAtCoords({ x: startX, y: ev.clientY });
+            const lineHint = typeof pos === "number" ? editor.offsetToPos(pos).line : editor.getCursor().line;
             const prevSelections = editor.listSelections();
             const prevScroll = editor.getScrollInfo();
-            this.writeBackColumnRatios(container, ratios, { editor, prevSelections, prevScroll });
+            this.writeBackColumnRatios(container, ratios, { editor, lineHint, prevSelections, prevScroll });
           };
 
           window.addEventListener("mousemove", onMove, true);
@@ -583,24 +599,20 @@ class MultiColumnLayoutPlugin extends Plugin {
     });
   }
 
-  writeBackColumnRatios(containerEl, ratios, ctx) {
-    const sourcePath = containerEl.dataset.mclSourcePath;
-    const lineStart = parseInt(containerEl.dataset.mclLineStart || "", 10);
-    const lineEnd = parseInt(containerEl.dataset.mclLineEnd || "", 10);
-    if (!sourcePath || !Number.isFinite(lineStart) || !Number.isFinite(lineEnd)) {
-      new Notice("Resize applied visually, but failed to locate source lines for write-back.");
-      return;
-    }
-
+  writeBackColumnRatios(_containerEl, ratios, ctx) {
     const view = this.app.workspace.getActiveViewOfType(MarkdownView);
     const editor = ctx?.editor ?? view?.editor ?? null;
-    if (!view?.file || view.file.path !== sourcePath || !editor) {
+    if (!view?.file || !editor) {
       new Notice("Resize applied visually, but write-back requires the note to be open in Live Preview.");
       return;
     }
 
-    const findMultiColumnHeader = () => {
-      for (let line = lineStart; line <= lineEnd; line++) {
+    const lineHint = typeof ctx?.lineHint === "number" ? ctx.lineHint : editor.getCursor().line;
+    const minLine = Math.max(0, lineHint - 1000);
+    const maxLine = editor.lastLine();
+
+    const findNearestMultiColumnHeader = () => {
+      for (let line = lineHint; line >= minLine; line--) {
         const text = editor.getLine(line);
         const m = /^(\s*)(>+)\s*\[!multi-column([^\]]*)\]/.exec(text);
         if (m) return { line, depth: m[2].length };
@@ -608,16 +620,17 @@ class MultiColumnLayoutPlugin extends Plugin {
       return null;
     };
 
-    const header = findMultiColumnHeader();
+    const header = findNearestMultiColumnHeader();
     if (!header) {
-      new Notice("Resize write-back failed: multi-column header not found.");
+      new Notice("Resize applied visually, but failed to locate the multi-column block for write-back.");
       return;
     }
 
     const colDepth = header.depth + 1;
     const colHeaderRe = new RegExp(`^(\\s*)(>{${colDepth}})\\s*\\[!col([^\\]]*)\\]`);
     const colLines: { line: number; text: string }[] = [];
-    for (let line = header.line; line <= lineEnd; line++) {
+    const scanEnd = Math.min(maxLine, header.line + 2000);
+    for (let line = header.line; line <= scanEnd; line++) {
       const text = editor.getLine(line);
       if (colHeaderRe.test(text)) colLines.push({ line, text });
       if (colLines.length >= ratios.length) break;
