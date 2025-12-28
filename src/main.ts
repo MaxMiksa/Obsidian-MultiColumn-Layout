@@ -154,7 +154,7 @@ class MultiColumnLayoutPlugin extends Plugin {
   async onload() {
     await this.loadSettings();
 
-    this.addSettingTab(new MultiColumnLayoutSettingTab(this.app, this));
+    this.addSettingTab(new MultiColumnLayoutSettingTab(this.app, this));        
     this.applySettingsStyles();
 
     this.registerEvent(
@@ -163,11 +163,12 @@ class MultiColumnLayoutPlugin extends Plugin {
       })
     );
 
-    this.registerMarkdownPostProcessor((el) => {
+    this.registerMarkdownPostProcessor((el, ctx) => {
       this.applyColumnWidths(el);
+      this.attachColumnResizers(el, ctx);
     });
 
-    this.registerEditorExtension(buildMultiColumnEditorExtensions(this));
+    this.registerEditorExtension(buildMultiColumnEditorExtensions(this));       
   }
 
   t(key, ...args) {
@@ -441,6 +442,223 @@ class MultiColumnLayoutPlugin extends Plugin {
         col.style.minWidth = "0";
       }
     });
+  }
+
+  attachColumnResizers(rootEl, ctx) {
+    const containers = rootEl.querySelectorAll('div.callout[data-callout="multi-column"]');
+    containers.forEach((container) => {
+      const content = container.querySelector(":scope > .callout-content") || container.querySelector(".callout-content");
+      if (!content) return;
+      if (content.classList.contains("mcl-resizing")) return;
+
+      const cols = Array.from(content.children).filter(
+        (child) => child instanceof HTMLElement && child.matches('div.callout[data-callout="col"]')
+      ) as HTMLElement[];
+      if (cols.length < 2) return;
+
+      // Remove old handles from previous renders
+      content.querySelectorAll(":scope > .mcl-resizer").forEach((el) => el.remove());
+
+      const section = ctx?.getSectionInfo?.(container) ?? ctx?.getSectionInfo?.(rootEl) ?? null;
+      const sourcePath = ctx?.sourcePath ?? null;
+      if (sourcePath) {
+        container.dataset.mclSourcePath = sourcePath;
+      }
+      if (section) {
+        container.dataset.mclLineStart = String(section.lineStart);
+        container.dataset.mclLineEnd = String(section.lineEnd);
+      } else {
+        delete container.dataset.mclLineStart;
+        delete container.dataset.mclLineEnd;
+      }
+
+      const handleWidth = 12;
+
+      const positionHandles = () => {
+        const topInset = getComputedStyle(container).getPropertyValue("--mcl-divider-inset")?.trim() || "1rem";
+        for (let i = 0; i < cols.length - 1; i++) {
+          const handle = content.querySelector(`:scope > .mcl-resizer[data-index="${i}"]`) as HTMLElement | null;
+          if (!handle) continue;
+          const x = cols[i].offsetLeft + cols[i].offsetWidth;
+          handle.style.left = `${x - handleWidth / 2}px`;
+          handle.style.top = topInset;
+          handle.style.bottom = topInset;
+          handle.style.width = `${handleWidth}px`;
+        }
+      };
+
+      for (let i = 0; i < cols.length - 1; i++) {
+        const handle = document.createElement("div");
+        handle.className = "mcl-resizer";
+        handle.dataset.index = String(i);
+        handle.setAttribute("aria-label", "Resize columns");
+        content.appendChild(handle);
+
+        const onMouseDown = (ev) => {
+          if (ev.button !== 0) return;
+          ev.preventDefault();
+          ev.stopPropagation();
+
+          const view = this.app.workspace.getActiveViewOfType(MarkdownView);
+          const editor = view?.editor ?? null;
+          if (!editor || !view?.file || (sourcePath && view.file.path !== sourcePath)) {
+            new Notice("Please use Live Preview (editable) to resize columns.");
+            return;
+          }
+
+          const containerRect = content.getBoundingClientRect();
+          const totalWidth = Math.max(1, content.clientWidth);
+          const startX = ev.clientX;
+
+          const readRatio = (colEl) => {
+            const raw = colEl.getAttribute("data-callout-metadata");
+            const n = raw != null ? parseInt(raw, 10) : NaN;
+            if (Number.isFinite(n) && n > 0 && n <= 100) return n;
+            const r = colEl.getBoundingClientRect();
+            return Math.max(1, Math.round((r.width / totalWidth) * 100));
+          };
+
+          const ratios = cols.map(readRatio);
+          const sum = ratios.reduce((a, b) => a + b, 0);
+          if (sum !== 100 && sum > 0) {
+            // Normalize to 100 while keeping relative proportions.
+            const normalized = ratios.map((r) => Math.max(1, Math.round((r / sum) * 100)));
+            const diff = 100 - normalized.reduce((a, b) => a + b, 0);
+            normalized[normalized.length - 1] += diff;
+            for (let k = 0; k < normalized.length; k++) ratios[k] = normalized[k];
+          }
+
+          const idx = i;
+          const pairTotal = ratios[idx] + ratios[idx + 1];
+          const minPx = 60;
+          const minPct = Math.max(1, Math.ceil((minPx / totalWidth) * 100));
+
+          const beforePct = ratios.slice(0, idx).reduce((a, b) => a + b, 0);
+
+          content.classList.add("mcl-resizing");
+          document.body.classList.add("mcl-global-resizing");
+
+          const applyRatiosToDOM = () => {
+            for (let k = 0; k < cols.length; k++) {
+              cols[k].style.flex = `0 0 ${ratios[k]}%`;
+              cols[k].style.minWidth = "0";
+            }
+            positionHandles();
+          };
+
+          const onMove = (moveEv) => {
+            moveEv.preventDefault();
+            const mouseX = moveEv.clientX;
+            const rel = Math.min(Math.max(mouseX - containerRect.left, 0), totalWidth);
+            const targetPct = Math.round((rel / totalWidth) * 100);
+            let newLeft = targetPct - beforePct;
+            newLeft = Math.min(Math.max(newLeft, minPct), pairTotal - minPct);
+            ratios[idx] = newLeft;
+            ratios[idx + 1] = pairTotal - newLeft;
+            applyRatiosToDOM();
+          };
+
+          const onUp = (upEv) => {
+            upEv.preventDefault();
+            window.removeEventListener("mousemove", onMove, true);
+            window.removeEventListener("mouseup", onUp, true);
+            content.classList.remove("mcl-resizing");
+            document.body.classList.remove("mcl-global-resizing");
+
+            // Ignore click without actual movement.
+            if (Math.abs(upEv.clientX - startX) < 1) {
+              applyRatiosToDOM();
+              return;
+            }
+
+            this.writeBackColumnRatios(container, ratios);
+          };
+
+          window.addEventListener("mousemove", onMove, true);
+          window.addEventListener("mouseup", onUp, true);
+          applyRatiosToDOM();
+        };
+
+        handle.addEventListener("mousedown", onMouseDown);
+      }
+
+      positionHandles();
+    });
+  }
+
+  writeBackColumnRatios(containerEl, ratios) {
+    const sourcePath = containerEl.dataset.mclSourcePath;
+    const lineStart = parseInt(containerEl.dataset.mclLineStart || "", 10);
+    const lineEnd = parseInt(containerEl.dataset.mclLineEnd || "", 10);
+    if (!sourcePath || !Number.isFinite(lineStart) || !Number.isFinite(lineEnd)) {
+      new Notice("Resize applied visually, but failed to locate source lines for write-back.");
+      return;
+    }
+
+    const view = this.app.workspace.getActiveViewOfType(MarkdownView);
+    const editor = view?.editor ?? null;
+    if (!view?.file || view.file.path !== sourcePath || !editor) {
+      new Notice("Resize applied visually, but write-back requires the note to be open in Live Preview.");
+      return;
+    }
+
+    const findMultiColumnHeader = () => {
+      for (let line = lineStart; line <= lineEnd; line++) {
+        const text = editor.getLine(line);
+        const m = /^(\s*)(>+)\s*\[!multi-column([^\]]*)\]/.exec(text);
+        if (m) return { line, depth: m[2].length };
+      }
+      return null;
+    };
+
+    const header = findMultiColumnHeader();
+    if (!header) {
+      new Notice("Resize write-back failed: multi-column header not found.");
+      return;
+    }
+
+    const colDepth = header.depth + 1;
+    const colHeaderRe = new RegExp(`^(\\s*)(>{${colDepth}})\\s*\\[!col([^\\]]*)\\]`);
+    const colLines: { line: number; text: string }[] = [];
+    for (let line = header.line; line <= lineEnd; line++) {
+      const text = editor.getLine(line);
+      if (colHeaderRe.test(text)) colLines.push({ line, text });
+      if (colLines.length >= ratios.length) break;
+    }
+
+    if (colLines.length !== ratios.length) {
+      new Notice(`Resize write-back failed: expected ${ratios.length} columns, found ${colLines.length}.`);
+      return;
+    }
+
+    const rewriteColHeader = (lineText, ratio) => {
+      return lineText.replace(/\[!col([^\]]*)\]/, (_m, meta) => {
+        const raw = String(meta || "");
+        const parts = raw.startsWith("|") ? raw.slice(1).split("|").filter((p) => p.length > 0) : [];
+        if (parts.length > 0 && /^\d+$/.test(parts[0])) {
+          parts[0] = String(ratio);
+        } else {
+          parts.unshift(String(ratio));
+        }
+        return `[!col|${parts.join("|")}]`;
+      });
+    };
+
+    const changes = colLines
+      .map(({ line, text }, idx) => {
+        const updated = rewriteColHeader(text, ratios[idx]);
+        if (updated === text) return null;
+        return {
+          from: { line, ch: 0 },
+          to: { line, ch: text.length },
+          text: updated
+        };
+      })
+      .filter(Boolean)
+      .sort((a, b) => b.from.line - a.from.line);
+
+    if (changes.length === 0) return;
+    editor.transaction({ changes }, "mcl-resize");
   }
 
   /**

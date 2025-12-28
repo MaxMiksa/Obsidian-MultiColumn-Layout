@@ -14,11 +14,50 @@
 
 .callout[data-callout="multi-column"] > .callout-content {
   display: flex;
+  position: relative;
   width: 100%;
   padding: 0;
   margin: 0;
   gap: var(--multi-column-gap, 1rem);
   align-items: stretch;
+}
+
+/* Drag Resizer Handles (Live Preview / Reading Mode) */
+.callout[data-callout="multi-column"] > .callout-content .mcl-resizer {
+  position: absolute;
+  z-index: 20;
+  cursor: col-resize;
+  touch-action: none;
+}
+
+.callout[data-callout="multi-column"] > .callout-content .mcl-resizer::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 2px;
+  border-radius: 2px;
+  background: var(--mcl-divider-color, var(--background-modifier-border));
+  opacity: 0;
+  transition: opacity 120ms ease;
+}
+
+.callout[data-callout="multi-column"] > .callout-content .mcl-resizer:hover::after,
+.callout[data-callout="multi-column"] > .callout-content.mcl-resizing .mcl-resizer::after {
+  opacity: 0.7;
+}
+
+body.mcl-global-resizing {
+  user-select: none;
+  cursor: col-resize;
+}
+
+@media (max-width: 768px) {
+  .callout[data-callout="multi-column"] > .callout-content .mcl-resizer {
+    display: none;
+  }
 }
 
 .callout[data-callout="col"] {
