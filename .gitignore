@@ -1,5 +1,7 @@
 # Dependencies
 node_modules/
+bin/
+obj/
 
 # System
 .DS_Store
@@ -7,7 +9,24 @@ Thumbs.db
 
 # IDE
 .idea/
+.vs/
 .vscode/
+*.user
+*.suo
 
 # Documentation (Internal)
 Files/
+Archive/
+Files/PRD.md
+Files/SDD.md
+Files/RELEASE_NOTES.md
+Files/CHANGELOG.md
+Files/CHANGELOG-zh.md
+AI_RELEASE_RULES.md
+CHECKLIST.md
+
+# Obsidian plugin user data
+data.json
+
+# Local backup
+main.legacy.js

@@ -24,6 +24,7 @@ Multi-Column Layout is an Obsidian plugin that simplifies the creation of side-b
 | **🧩 Nested Layouts** | Create complex grids by nesting columns inside columns. |
 | **📐 Custom Widths** | Adjust column widths easily using metadata like `[!col|40]`. |
 | **📺 Live Preview** | See your layouts rendered instantly as you type. |
+| **✍️ In-Column Editing** | In Live Preview, Enter and multi-line paste keep content inside the current column automatically (`>>/>>>>`). |
 | **🔗 Compatibility** | Uses standard Markdown/Callout syntax for maximum portability. |
 
 ## 🚀 Usage Guide
@@ -89,8 +90,9 @@ The syntax is designed to be simple and intuitive if you prefer typing it manual
 <summary><b>💻 Developer Guide</b></summary>
 
 1. Clone this repo.
-2. Run `npm install` (if package.json is added).
-3. Copy `main.js`, `manifest.json`, and `styles.css` to your vault's plugin folder.
+2. Run `npm install`.
+3. Run `npm run dev` (watch) or `npm run build`.
+4. Copy `main.js`, `manifest.json`, and `styles.css` to your vault's plugin folder.
 </details>
 
 ## 🤝 Contribution & Contact
