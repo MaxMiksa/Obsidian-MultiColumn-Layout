@@ -501,8 +501,11 @@ var MultiColumnLayoutPlugin = class extends Plugin {
   attachColumnResizers(rootEl, ctx) {
     const containers = rootEl.querySelectorAll('div.callout[data-callout="multi-column"]');
     containers.forEach((container) => {
-      var _a, _b, _c, _d, _e;
-      if (!container.closest(".markdown-source-view.is-live-preview")) return;
+      var _a, _b;
+      const view = this.app.workspace.getActiveViewOfType(MarkdownView);
+      if (!(view == null ? void 0 : view.file) || ((_a = view.getMode) == null ? void 0 : _a.call(view)) !== "source") return;
+      const sourcePath = (_b = ctx == null ? void 0 : ctx.sourcePath) != null ? _b : null;
+      if (sourcePath && view.file.path !== sourcePath) return;
       const content = container.querySelector(":scope > .callout-content") || container.querySelector(".callout-content");
       if (!content) return;
       if (content.classList.contains("mcl-resizing")) return;
@@ -511,18 +514,7 @@ var MultiColumnLayoutPlugin = class extends Plugin {
         (child) => child instanceof HTMLElement && child.matches('div.callout[data-callout="col"]')
       );
       if (cols.length < 2) return;
-      const section = (_d = (_c = (_a = ctx == null ? void 0 : ctx.getSectionInfo) == null ? void 0 : _a.call(ctx, container)) != null ? _c : (_b = ctx == null ? void 0 : ctx.getSectionInfo) == null ? void 0 : _b.call(ctx, rootEl)) != null ? _d : null;
-      const sourcePath = (_e = ctx == null ? void 0 : ctx.sourcePath) != null ? _e : null;
-      if (sourcePath) {
-        container.dataset.mclSourcePath = sourcePath;
-      }
-      if (section) {
-        container.dataset.mclLineStart = String(section.lineStart);
-        container.dataset.mclLineEnd = String(section.lineEnd);
-      } else {
-        delete container.dataset.mclLineStart;
-        delete container.dataset.mclLineEnd;
-      }
+      if (sourcePath) container.dataset.mclSourcePath = sourcePath;
       const handleWidth = 12;
       const positionHandles = () => {
         var _a2;
@@ -548,7 +540,6 @@ var MultiColumnLayoutPlugin = class extends Plugin {
           if (ev.button !== 0) return;
           ev.preventDefault();
           ev.stopPropagation();
-          const view = this.app.workspace.getActiveViewOfType(MarkdownView);
           const editor = (_a2 = view == null ? void 0 : view.editor) != null ? _a2 : null;
           if (!editor || !(view == null ? void 0 : view.file) || sourcePath && view.file.path !== sourcePath) {
             new Notice("Please use Live Preview (editable) to resize columns.");

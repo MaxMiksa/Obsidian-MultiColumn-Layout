@@ -452,8 +452,11 @@ class MultiColumnLayoutPlugin extends Plugin {
   attachColumnResizers(rootEl, ctx) {
     const containers = rootEl.querySelectorAll('div.callout[data-callout="multi-column"]');
     containers.forEach((container) => {
-      // Only enable drag-to-resize in Live Preview to ensure write-back works and avoid confusion in Reading Mode.
-      if (!container.closest(".markdown-source-view.is-live-preview")) return;
+      // Only enable handles for the currently active, editable note.
+      const view = this.app.workspace.getActiveViewOfType(MarkdownView);
+      if (!view?.file || view.getMode?.() !== "source") return;
+      const sourcePath = ctx?.sourcePath ?? null;
+      if (sourcePath && view.file.path !== sourcePath) return;
 
       const content = container.querySelector(":scope > .callout-content") || container.querySelector(".callout-content");
       if (!content) return;
@@ -467,18 +470,7 @@ class MultiColumnLayoutPlugin extends Plugin {
       ) as HTMLElement[];
       if (cols.length < 2) return;
 
-      const section = ctx?.getSectionInfo?.(container) ?? ctx?.getSectionInfo?.(rootEl) ?? null;
-      const sourcePath = ctx?.sourcePath ?? null;
-      if (sourcePath) {
-        container.dataset.mclSourcePath = sourcePath;
-      }
-      if (section) {
-        container.dataset.mclLineStart = String(section.lineStart);
-        container.dataset.mclLineEnd = String(section.lineEnd);
-      } else {
-        delete container.dataset.mclLineStart;
-        delete container.dataset.mclLineEnd;
-      }
+      if (sourcePath) container.dataset.mclSourcePath = sourcePath;
 
       const handleWidth = 12;
 
@@ -508,7 +500,6 @@ class MultiColumnLayoutPlugin extends Plugin {
           ev.preventDefault();
           ev.stopPropagation();
 
-          const view = this.app.workspace.getActiveViewOfType(MarkdownView);
           const editor = view?.editor ?? null;
           if (!editor || !view?.file || (sourcePath && view.file.path !== sourcePath)) {
             new Notice("Please use Live Preview (editable) to resize columns.");
