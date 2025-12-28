@@ -452,12 +452,6 @@ class MultiColumnLayoutPlugin extends Plugin {
   attachColumnResizers(rootEl, ctx) {
     const containers = rootEl.querySelectorAll('div.callout[data-callout="multi-column"]');
     containers.forEach((container) => {
-      // Only enable handles for the currently active, editable note.
-      const view = this.app.workspace.getActiveViewOfType(MarkdownView);
-      if (!view?.file || view.getMode?.() !== "source") return;
-      const sourcePath = ctx?.sourcePath ?? null;
-      if (sourcePath && view.file.path !== sourcePath) return;
-
       const content = container.querySelector(":scope > .callout-content") || container.querySelector(".callout-content");
       if (!content) return;
       if (content.classList.contains("mcl-resizing")) return;
@@ -470,7 +464,34 @@ class MultiColumnLayoutPlugin extends Plugin {
       ) as HTMLElement[];
       if (cols.length < 2) return;
 
-      if (sourcePath) container.dataset.mclSourcePath = sourcePath;
+      // Best-effort: infer expected blockquote depth from nesting in [!col] callouts (0 -> 1, 1 -> 3, 2 -> 5 ...).
+      try {
+        let expectedDepth = 1;
+        let parent = container.parentElement;
+        while (parent) {
+          if (parent instanceof HTMLElement && parent.matches('div.callout[data-callout="col"]')) {
+            expectedDepth += 2;
+          }
+          parent = parent.parentElement;
+        }
+        container.dataset.mclExpectedDepth = String(expectedDepth);
+      } catch {
+        delete container.dataset.mclExpectedDepth;
+      }
+
+      const section = ctx?.getSectionInfo?.(container) ?? ctx?.getSectionInfo?.(rootEl) ?? null;
+      const initialView = this.app.workspace.getActiveViewOfType(MarkdownView);
+      const sourcePath = ctx?.sourcePath ?? initialView?.file?.path ?? null;
+      if (sourcePath) {
+        container.dataset.mclSourcePath = sourcePath;
+      }
+      if (section) {
+        container.dataset.mclLineStart = String(section.lineStart);       
+        container.dataset.mclLineEnd = String(section.lineEnd);
+      } else {
+        delete container.dataset.mclLineStart;
+        delete container.dataset.mclLineEnd;
+      }
 
       const handleWidth = 12;
 
@@ -495,22 +516,17 @@ class MultiColumnLayoutPlugin extends Plugin {
         // IMPORTANT: insert between columns so CSS selectors like :last-child on columns keep working.
         content.insertBefore(handle, cols[i + 1]);
 
-        const onMouseDown = (ev) => {
-          if (ev.button !== 0) return;
-          ev.preventDefault();
-          ev.stopPropagation();
+          const onMouseDown = (ev) => {
+            if (ev.button !== 0) return;
+            ev.preventDefault();
+            ev.stopPropagation();
 
-          const editor = view?.editor ?? null;
-          if (!editor || !view?.file || (sourcePath && view.file.path !== sourcePath)) {
-            new Notice("Please use Live Preview (editable) to resize columns.");
-            return;
-          }
-
-          const cmView = this.getCM6EditorView(view);
-          if (!cmView?.posAtCoords) {
-            new Notice("Resize write-back requires Live Preview (CodeMirror 6).");
-            return;
-          }
+            const view = this.app.workspace.getActiveViewOfType(MarkdownView);
+            const editor = view?.editor ?? null;
+            if (!editor || !view?.file || (sourcePath && view.file.path !== sourcePath)) {
+              new Notice("Please use Live Preview (editable) to resize columns.");
+              return;
+            }
 
           const containerRect = content.getBoundingClientRect();
           const totalWidth = Math.max(1, content.clientWidth);
@@ -518,6 +534,11 @@ class MultiColumnLayoutPlugin extends Plugin {
 
           const widths = cols.map((colEl) => colEl.getBoundingClientRect().width);
           const ratios = widths.map((w) => Math.max(1, Math.round((w / totalWidth) * 100)));
+          const existingRatiosHint = cols.map((colEl) => {
+            const raw = colEl.getAttribute("data-callout-metadata");
+            const n = parseInt(String(raw ?? ""), 10);
+            return Number.isFinite(n) ? n : null;
+          });
           const sum = ratios.reduce((a, b) => a + b, 0);
           if (sum !== 100 && sum > 0) {
             // Normalize to 100 while keeping relative proportions.
@@ -571,11 +592,41 @@ class MultiColumnLayoutPlugin extends Plugin {
               return;
             }
 
-            const pos = cmView.posAtCoords({ x: startX, y: ev.clientY });
-            const lineHint = typeof pos === "number" ? editor.offsetToPos(pos).line : editor.getCursor().line;
             const prevSelections = editor.listSelections();
             const prevScroll = editor.getScrollInfo();
-            this.writeBackColumnRatios(container, ratios, { editor, lineHint, prevSelections, prevScroll });
+
+            let lineHint: number | null = null;
+            try {
+              const cmView = this.getCM6EditorView(view);
+              const pos = cmView?.posAtCoords?.({ x: ev.clientX, y: ev.clientY });
+              if (typeof pos === "number") {
+                if (typeof editor.offsetToPos === "function") {
+                  lineHint = editor.offsetToPos(pos).line;
+                } else if (cmView?.state?.doc?.lineAt) {
+                  lineHint = cmView.state.doc.lineAt(pos).number - 1;
+                }
+              }
+            } catch {
+              // best-effort only
+            }
+
+            const sectionNow = ctx?.getSectionInfo?.(container) ?? section ?? null;
+            if (sectionNow) {
+              container.dataset.mclLineStart = String(sectionNow.lineStart);
+              container.dataset.mclLineEnd = String(sectionNow.lineEnd);
+            }
+
+            this.writeBackColumnRatios(container, ratios, {
+              editor,
+              sourcePath,
+              expectedDepth: container.dataset.mclExpectedDepth,
+              lineStart: sectionNow?.lineStart,
+              lineEnd: sectionNow?.lineEnd,
+              lineHint,
+              existingRatiosHint,
+              prevSelections,
+              prevScroll
+            });
           };
 
           window.addEventListener("mousemove", onMove, true);
@@ -590,42 +641,140 @@ class MultiColumnLayoutPlugin extends Plugin {
     });
   }
 
-  writeBackColumnRatios(_containerEl, ratios, ctx) {
+  writeBackColumnRatios(containerEl, ratios, ctx) {
     const view = this.app.workspace.getActiveViewOfType(MarkdownView);
     const editor = ctx?.editor ?? view?.editor ?? null;
-    if (!view?.file || !editor) {
+    const activePath = view?.file?.path ?? null;
+    const dsPath = containerEl?.dataset?.mclSourcePath ?? null;
+    const sourcePath = ctx?.sourcePath ?? dsPath ?? activePath;
+
+    if (!activePath || !editor || (sourcePath && activePath !== sourcePath)) {
       new Notice("Resize applied visually, but write-back requires the note to be open in Live Preview.");
       return;
     }
 
-    const lineHint = typeof ctx?.lineHint === "number" ? ctx.lineHint : editor.getCursor().line;
-    const minLine = Math.max(0, lineHint - 1000);
-    const maxLine = editor.lastLine();
-
-    const findNearestMultiColumnHeader = () => {
-      for (let line = lineHint; line >= minLine; line--) {
-        const text = editor.getLine(line);
-        const m = /^(\s*)(>+)\s*\[!multi-column([^\]]*)\]/.exec(text);
-        if (m) return { line, depth: m[2].length };
-      }
-      return null;
+    const parseMaybeInt = (v) => {
+      const n = typeof v === "number" ? v : parseInt(String(v ?? ""), 10);
+      return Number.isFinite(n) ? n : null;
     };
 
-    const header = findNearestMultiColumnHeader();
-    if (!header) {
+    const lineStart = parseMaybeInt(ctx?.lineStart) ?? parseMaybeInt(containerEl?.dataset?.mclLineStart);
+    const lineEnd = parseMaybeInt(ctx?.lineEnd) ?? parseMaybeInt(containerEl?.dataset?.mclLineEnd);
+    const expectedDepth = parseMaybeInt(ctx?.expectedDepth) ?? parseMaybeInt(containerEl?.dataset?.mclExpectedDepth);
+    const existingRatiosHint: (number | null)[] | null = Array.isArray(ctx?.existingRatiosHint)
+      ? ctx.existingRatiosHint
+      : null;
+
+    const maxLine = editor.lastLine();
+    const cursorLine = editor.getCursor?.().line ?? 0;
+    const lineHint = parseMaybeInt(ctx?.lineHint) ?? lineStart ?? cursorLine;
+
+    const clamp = (n, min, max) => Math.min(Math.max(n, min), max);
+    const expandLines = 10;
+    let scanMin = Math.max(0, lineHint - 5000);
+    let scanMax = Math.min(maxLine, lineHint + 5000);
+    if (lineStart != null) scanMin = Math.max(0, lineStart - expandLines);
+    if (lineEnd != null) scanMax = Math.min(maxLine, lineEnd + expandLines);
+    if (scanMin > scanMax) {
+      const tmp = scanMin;
+      scanMin = scanMax;
+      scanMax = tmp;
+    }
+    const anchorLine = clamp(lineHint, scanMin, scanMax);
+
+    const getQuoteDepth = (text) => {
+      const m = /^(\s*)(>+)/.exec(text);
+      return m ? m[2].length : 0;
+    };
+
+    const extractColRatioFromHeader = (lineText) => {
+      const m = /\[!col([^\]]*)\]/.exec(lineText);
+      if (!m) return null;
+      const raw = String(m[1] || "");
+      const parts = raw.startsWith("|") ? raw.slice(1).split("|").filter((p) => p.length > 0) : [];
+      if (parts.length === 0) return null;
+      const n = parseInt(parts[0], 10);
+      return Number.isFinite(n) ? n : null;
+    };
+
+    const scoreAgainstHint = (colLines) => {
+      if (!existingRatiosHint || existingRatiosHint.length !== colLines.length) return null;
+      let score = 0;
+      for (let i = 0; i < colLines.length; i++) {
+        const hinted = existingRatiosHint[i];
+        const actual = extractColRatioFromHeader(colLines[i].text);
+        if (typeof hinted !== "number") continue;
+        if (hinted === actual) score++;
+      }
+      return score;
+    };
+
+    const distanceToHint = (line) => {
+      const cursorDistance = Math.abs(line - anchorLine);
+      if (lineStart != null && lineEnd != null) {
+        const inSection = line >= lineStart && line <= lineEnd;
+        return (inSection ? 0 : 10_000) + cursorDistance;
+      }
+      return cursorDistance;
+    };
+
+    const findBestHeaderAndCols = (depthFilter) => {
+      let best = null;
+      let bestScore = -1;
+      let bestDistance = Number.POSITIVE_INFINITY;
+
+      for (let line = scanMin; line <= scanMax; line++) {
+        const text = editor.getLine(line);
+        const m = /^(\s*)(>+)\s*\[!multi-column([^\]]*)\]/.exec(text);
+        if (!m) continue;
+
+        const depth = m[2].length;
+        if (typeof depthFilter === "number" && depth !== depthFilter) continue;
+
+        const colDepth = depth + 1;
+        const colHeaderRe = new RegExp(`^(\\s*)(>{${colDepth}})\\s*\\[!col([^\\]]*)\\]`);
+
+        const scanEnd = Math.min(scanMax, maxLine, line + 2000);
+        const colLines: { line: number; text: string }[] = [];
+
+        for (let j = line; j <= scanEnd; j++) {
+          const t = editor.getLine(j);
+          if (j > line) {
+            const qd = getQuoteDepth(t);
+            if (qd === 0) break;
+            if (qd < depth && t.trim() !== "") break;
+          }
+          if (colHeaderRe.test(t)) colLines.push({ line: j, text: t });
+          if (colLines.length >= ratios.length) break;
+        }
+
+        if (colLines.length !== ratios.length) continue;
+
+        const score = scoreAgainstHint(colLines) ?? 0;
+        const dist = distanceToHint(line);
+
+        const isBetter =
+          score > bestScore ||
+          (score === bestScore && dist < bestDistance);
+
+        if (isBetter) {
+          bestScore = score;
+          bestDistance = dist;
+          best = { header: { line, depth }, colLines };
+        }
+      }
+
+      return best;
+    };
+
+    const found =
+      findBestHeaderAndCols(expectedDepth) ?? (expectedDepth != null ? findBestHeaderAndCols(null) : null);
+    if (!found) {
       new Notice("Resize applied visually, but failed to locate the multi-column block for write-back.");
       return;
     }
 
-    const colDepth = header.depth + 1;
-    const colHeaderRe = new RegExp(`^(\\s*)(>{${colDepth}})\\s*\\[!col([^\\]]*)\\]`);
-    const colLines: { line: number; text: string }[] = [];
-    const scanEnd = Math.min(maxLine, header.line + 2000);
-    for (let line = header.line; line <= scanEnd; line++) {
-      const text = editor.getLine(line);
-      if (colHeaderRe.test(text)) colLines.push({ line, text });
-      if (colLines.length >= ratios.length) break;
-    }
+    const { colLines } = found;
 
     if (colLines.length !== ratios.length) {
       new Notice(`Resize write-back failed: expected ${ratios.length} columns, found ${colLines.length}.`);
