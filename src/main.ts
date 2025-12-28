@@ -569,6 +569,8 @@ class MultiColumnLayoutPlugin extends Plugin {
 
           const onMove = (moveEv) => {
             moveEv.preventDefault();
+            moveEv.stopPropagation();
+            (moveEv as any).stopImmediatePropagation?.();
             const mouseX = moveEv.clientX;
             const rel = Math.min(Math.max(mouseX - containerRect.left, 0), totalWidth);
             const targetPct = Math.round((rel / totalWidth) * 100);
@@ -581,10 +583,21 @@ class MultiColumnLayoutPlugin extends Plugin {
 
           const onUp = (upEv) => {
             upEv.preventDefault();
+            upEv.stopPropagation();
+            (upEv as any).stopImmediatePropagation?.();
             window.removeEventListener("mousemove", onMove, true);
             window.removeEventListener("mouseup", onUp, true);
             content.classList.remove("mcl-resizing");
             document.body.classList.remove("mcl-global-resizing");
+
+            // Prevent the synthetic click-on-release from switching Live Preview blocks into source mode.
+            const suppressClick = (clickEv) => {
+              clickEv.preventDefault();
+              clickEv.stopPropagation();
+              clickEv.stopImmediatePropagation?.();
+            };
+            window.addEventListener("click", suppressClick, true);
+            window.setTimeout(() => window.removeEventListener("click", suppressClick, true), 0);
 
             // Ignore click without actual movement.
             if (Math.abs(upEv.clientX - startX) < 1) {

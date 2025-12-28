@@ -600,7 +600,10 @@ var MultiColumnLayoutPlugin = class extends Plugin {
             positionHandles();
           };
           const onMove = (moveEv) => {
+            var _a3;
             moveEv.preventDefault();
+            moveEv.stopPropagation();
+            (_a3 = moveEv.stopImmediatePropagation) == null ? void 0 : _a3.call(moveEv);
             const mouseX = moveEv.clientX;
             const rel = Math.min(Math.max(mouseX - containerRect.left, 0), totalWidth);
             const targetPct = Math.round(rel / totalWidth * 100);
@@ -611,12 +614,22 @@ var MultiColumnLayoutPlugin = class extends Plugin {
             applyRatiosToDOM();
           };
           const onUp = (upEv) => {
-            var _a3, _b2, _c2, _d2, _e2, _f2;
+            var _a3, _b2, _c2, _d2, _e2, _f2, _g2;
             upEv.preventDefault();
+            upEv.stopPropagation();
+            (_a3 = upEv.stopImmediatePropagation) == null ? void 0 : _a3.call(upEv);
             window.removeEventListener("mousemove", onMove, true);
             window.removeEventListener("mouseup", onUp, true);
             content.classList.remove("mcl-resizing");
             document.body.classList.remove("mcl-global-resizing");
+            const suppressClick = (clickEv) => {
+              var _a4;
+              clickEv.preventDefault();
+              clickEv.stopPropagation();
+              (_a4 = clickEv.stopImmediatePropagation) == null ? void 0 : _a4.call(clickEv);
+            };
+            window.addEventListener("click", suppressClick, true);
+            window.setTimeout(() => window.removeEventListener("click", suppressClick, true), 0);
             if (Math.abs(upEv.clientX - startX) < 1) {
               applyRatiosToDOM();
               return;
@@ -626,17 +639,17 @@ var MultiColumnLayoutPlugin = class extends Plugin {
             let lineHint = null;
             try {
               const cmView = this.getCM6EditorView(view);
-              const pos = (_a3 = cmView == null ? void 0 : cmView.posAtCoords) == null ? void 0 : _a3.call(cmView, { x: ev.clientX, y: ev.clientY });
+              const pos = (_b2 = cmView == null ? void 0 : cmView.posAtCoords) == null ? void 0 : _b2.call(cmView, { x: ev.clientX, y: ev.clientY });
               if (typeof pos === "number") {
                 if (typeof editor.offsetToPos === "function") {
                   lineHint = editor.offsetToPos(pos).line;
-                } else if ((_c2 = (_b2 = cmView == null ? void 0 : cmView.state) == null ? void 0 : _b2.doc) == null ? void 0 : _c2.lineAt) {
+                } else if ((_d2 = (_c2 = cmView == null ? void 0 : cmView.state) == null ? void 0 : _c2.doc) == null ? void 0 : _d2.lineAt) {
                   lineHint = cmView.state.doc.lineAt(pos).number - 1;
                 }
               }
             } catch (e) {
             }
-            const sectionNow = (_f2 = (_e2 = (_d2 = ctx == null ? void 0 : ctx.getSectionInfo) == null ? void 0 : _d2.call(ctx, container)) != null ? _e2 : section) != null ? _f2 : null;
+            const sectionNow = (_g2 = (_f2 = (_e2 = ctx == null ? void 0 : ctx.getSectionInfo) == null ? void 0 : _e2.call(ctx, container)) != null ? _f2 : section) != null ? _g2 : null;
             if (sectionNow) {
               container.dataset.mclLineStart = String(sectionNow.lineStart);
               container.dataset.mclLineEnd = String(sectionNow.lineEnd);
