@@ -451,13 +451,13 @@ class MultiColumnLayoutPlugin extends Plugin {
       if (!content) return;
       if (content.classList.contains("mcl-resizing")) return;
 
+      // Remove old handles from previous renders
+      content.querySelectorAll(":scope > .mcl-resizer").forEach((el) => el.remove());
+
       const cols = Array.from(content.children).filter(
         (child) => child instanceof HTMLElement && child.matches('div.callout[data-callout="col"]')
       ) as HTMLElement[];
       if (cols.length < 2) return;
-
-      // Remove old handles from previous renders
-      content.querySelectorAll(":scope > .mcl-resizer").forEach((el) => el.remove());
 
       const section = ctx?.getSectionInfo?.(container) ?? ctx?.getSectionInfo?.(rootEl) ?? null;
       const sourcePath = ctx?.sourcePath ?? null;
@@ -492,7 +492,8 @@ class MultiColumnLayoutPlugin extends Plugin {
         handle.className = "mcl-resizer";
         handle.dataset.index = String(i);
         handle.setAttribute("aria-label", "Resize columns");
-        content.appendChild(handle);
+        // IMPORTANT: insert between columns so CSS selectors like :last-child on columns keep working.
+        content.insertBefore(handle, cols[i + 1]);
 
         const onMouseDown = (ev) => {
           if (ev.button !== 0) return;
@@ -510,15 +511,8 @@ class MultiColumnLayoutPlugin extends Plugin {
           const totalWidth = Math.max(1, content.clientWidth);
           const startX = ev.clientX;
 
-          const readRatio = (colEl) => {
-            const raw = colEl.getAttribute("data-callout-metadata");
-            const n = raw != null ? parseInt(raw, 10) : NaN;
-            if (Number.isFinite(n) && n > 0 && n <= 100) return n;
-            const r = colEl.getBoundingClientRect();
-            return Math.max(1, Math.round((r.width / totalWidth) * 100));
-          };
-
-          const ratios = cols.map(readRatio);
+          const widths = cols.map((colEl) => colEl.getBoundingClientRect().width);
+          const ratios = widths.map((w) => Math.max(1, Math.round((w / totalWidth) * 100)));
           const sum = ratios.reduce((a, b) => a + b, 0);
           if (sum !== 100 && sum > 0) {
             // Normalize to 100 while keeping relative proportions.
@@ -542,6 +536,7 @@ class MultiColumnLayoutPlugin extends Plugin {
             for (let k = 0; k < cols.length; k++) {
               cols[k].style.flex = `0 0 ${ratios[k]}%`;
               cols[k].style.minWidth = "0";
+              cols[k].setAttribute("data-callout-metadata", String(ratios[k]));
             }
             positionHandles();
           };
@@ -571,7 +566,9 @@ class MultiColumnLayoutPlugin extends Plugin {
               return;
             }
 
-            this.writeBackColumnRatios(container, ratios);
+            const prevSelections = editor.listSelections();
+            const prevScroll = editor.getScrollInfo();
+            this.writeBackColumnRatios(container, ratios, { editor, prevSelections, prevScroll });
           };
 
           window.addEventListener("mousemove", onMove, true);
@@ -582,11 +579,11 @@ class MultiColumnLayoutPlugin extends Plugin {
         handle.addEventListener("mousedown", onMouseDown);
       }
 
-      positionHandles();
+      requestAnimationFrame(positionHandles);
     });
   }
 
-  writeBackColumnRatios(containerEl, ratios) {
+  writeBackColumnRatios(containerEl, ratios, ctx) {
     const sourcePath = containerEl.dataset.mclSourcePath;
     const lineStart = parseInt(containerEl.dataset.mclLineStart || "", 10);
     const lineEnd = parseInt(containerEl.dataset.mclLineEnd || "", 10);
@@ -596,7 +593,7 @@ class MultiColumnLayoutPlugin extends Plugin {
     }
 
     const view = this.app.workspace.getActiveViewOfType(MarkdownView);
-    const editor = view?.editor ?? null;
+    const editor = ctx?.editor ?? view?.editor ?? null;
     if (!view?.file || view.file.path !== sourcePath || !editor) {
       new Notice("Resize applied visually, but write-back requires the note to be open in Live Preview.");
       return;
@@ -658,7 +655,18 @@ class MultiColumnLayoutPlugin extends Plugin {
       .sort((a, b) => b.from.line - a.from.line);
 
     if (changes.length === 0) return;
+    const prevSelections = ctx?.prevSelections ?? editor.listSelections();
+    const prevScroll = ctx?.prevScroll ?? editor.getScrollInfo();
     editor.transaction({ changes }, "mcl-resize");
+    requestAnimationFrame(() => {
+      try {
+        editor.setSelections(prevSelections, 0);
+        editor.scrollTo(prevScroll.left, prevScroll.top);
+        editor.focus();
+      } catch {
+        // ignore
+      }
+    });
   }
 
   /**

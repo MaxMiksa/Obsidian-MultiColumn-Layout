@@ -500,11 +500,11 @@ var MultiColumnLayoutPlugin = class extends Plugin {
       const content = container.querySelector(":scope > .callout-content") || container.querySelector(".callout-content");
       if (!content) return;
       if (content.classList.contains("mcl-resizing")) return;
+      content.querySelectorAll(":scope > .mcl-resizer").forEach((el) => el.remove());
       const cols = Array.from(content.children).filter(
         (child) => child instanceof HTMLElement && child.matches('div.callout[data-callout="col"]')
       );
       if (cols.length < 2) return;
-      content.querySelectorAll(":scope > .mcl-resizer").forEach((el) => el.remove());
       const section = (_d = (_c = (_a = ctx == null ? void 0 : ctx.getSectionInfo) == null ? void 0 : _a.call(ctx, container)) != null ? _c : (_b = ctx == null ? void 0 : ctx.getSectionInfo) == null ? void 0 : _b.call(ctx, rootEl)) != null ? _d : null;
       const sourcePath = (_e = ctx == null ? void 0 : ctx.sourcePath) != null ? _e : null;
       if (sourcePath) {
@@ -536,7 +536,7 @@ var MultiColumnLayoutPlugin = class extends Plugin {
         handle.className = "mcl-resizer";
         handle.dataset.index = String(i);
         handle.setAttribute("aria-label", "Resize columns");
-        content.appendChild(handle);
+        content.insertBefore(handle, cols[i + 1]);
         const onMouseDown = (ev) => {
           var _a2;
           if (ev.button !== 0) return;
@@ -551,14 +551,8 @@ var MultiColumnLayoutPlugin = class extends Plugin {
           const containerRect = content.getBoundingClientRect();
           const totalWidth = Math.max(1, content.clientWidth);
           const startX = ev.clientX;
-          const readRatio = (colEl) => {
-            const raw = colEl.getAttribute("data-callout-metadata");
-            const n = raw != null ? parseInt(raw, 10) : NaN;
-            if (Number.isFinite(n) && n > 0 && n <= 100) return n;
-            const r = colEl.getBoundingClientRect();
-            return Math.max(1, Math.round(r.width / totalWidth * 100));
-          };
-          const ratios = cols.map(readRatio);
+          const widths = cols.map((colEl) => colEl.getBoundingClientRect().width);
+          const ratios = widths.map((w) => Math.max(1, Math.round(w / totalWidth * 100)));
           const sum = ratios.reduce((a, b) => a + b, 0);
           if (sum !== 100 && sum > 0) {
             const normalized = ratios.map((r) => Math.max(1, Math.round(r / sum * 100)));
@@ -577,6 +571,7 @@ var MultiColumnLayoutPlugin = class extends Plugin {
             for (let k = 0; k < cols.length; k++) {
               cols[k].style.flex = `0 0 ${ratios[k]}%`;
               cols[k].style.minWidth = "0";
+              cols[k].setAttribute("data-callout-metadata", String(ratios[k]));
             }
             positionHandles();
           };
@@ -601,7 +596,9 @@ var MultiColumnLayoutPlugin = class extends Plugin {
               applyRatiosToDOM();
               return;
             }
-            this.writeBackColumnRatios(container, ratios);
+            const prevSelections = editor.listSelections();
+            const prevScroll = editor.getScrollInfo();
+            this.writeBackColumnRatios(container, ratios, { editor, prevSelections, prevScroll });
           };
           window.addEventListener("mousemove", onMove, true);
           window.addEventListener("mouseup", onUp, true);
@@ -609,11 +606,11 @@ var MultiColumnLayoutPlugin = class extends Plugin {
         };
         handle.addEventListener("mousedown", onMouseDown);
       }
-      positionHandles();
+      requestAnimationFrame(positionHandles);
     });
   }
-  writeBackColumnRatios(containerEl, ratios) {
-    var _a;
+  writeBackColumnRatios(containerEl, ratios, ctx) {
+    var _a, _b, _c, _d;
     const sourcePath = containerEl.dataset.mclSourcePath;
     const lineStart = parseInt(containerEl.dataset.mclLineStart || "", 10);
     const lineEnd = parseInt(containerEl.dataset.mclLineEnd || "", 10);
@@ -622,7 +619,7 @@ var MultiColumnLayoutPlugin = class extends Plugin {
       return;
     }
     const view = this.app.workspace.getActiveViewOfType(MarkdownView);
-    const editor = (_a = view == null ? void 0 : view.editor) != null ? _a : null;
+    const editor = (_b = (_a = ctx == null ? void 0 : ctx.editor) != null ? _a : view == null ? void 0 : view.editor) != null ? _b : null;
     if (!(view == null ? void 0 : view.file) || view.file.path !== sourcePath || !editor) {
       new Notice("Resize applied visually, but write-back requires the note to be open in Live Preview.");
       return;
@@ -674,7 +671,17 @@ var MultiColumnLayoutPlugin = class extends Plugin {
       };
     }).filter(Boolean).sort((a, b) => b.from.line - a.from.line);
     if (changes.length === 0) return;
+    const prevSelections = (_c = ctx == null ? void 0 : ctx.prevSelections) != null ? _c : editor.listSelections();
+    const prevScroll = (_d = ctx == null ? void 0 : ctx.prevScroll) != null ? _d : editor.getScrollInfo();
     editor.transaction({ changes }, "mcl-resize");
+    requestAnimationFrame(() => {
+      try {
+        editor.setSelections(prevSelections, 0);
+        editor.scrollTo(prevScroll.left, prevScroll.top);
+        editor.focus();
+      } catch (e) {
+      }
+    });
   }
   /**
    * Apply current appearance flags (bordered/horizontal) to all existing multi-column callouts in the vault.

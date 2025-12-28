@@ -28,6 +28,8 @@
   z-index: 20;
   cursor: col-resize;
   touch-action: none;
+  user-select: none;
+  background: transparent;
 }
 
 .callout[data-callout="multi-column"] > .callout-content .mcl-resizer::after {
@@ -122,6 +124,7 @@ body.mcl-global-resizing {
   bottom: var(--mcl-divider-inset, 1rem);
   right: 0;
   border-right: var(--mcl-divider-width, 1px) var(--mcl-divider-style, solid) var(--mcl-divider-color, var(--background-modifier-border));
+  pointer-events: none;
 }
 
 /* Horizontal Dividers */
