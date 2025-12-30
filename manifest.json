@@ -3,7 +3,7 @@
   "name": "Multi-Column Layout",
   "version": "2.1.0",
   "minAppVersion": "1.5.0",
-  "description": "Callout-based multi-column layouts with quick insert templates.",
+  "description": "Multi-column layouts with quick insert templates. Supports nested columns and rich text.",
   "author": "zheyuan (Max) Kong",
   "authorUrl": "",
   "isDesktopOnly": false
