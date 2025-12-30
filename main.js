@@ -252,6 +252,7 @@ var TEXTS = {
     "modal.error.sum": "\u5F53\u524D\u603B\u548C\u4E3A {0}% \uFF0C\u5FC5\u987B\u662F 100%\u3002"
   }
 };
+var RESIZER_HANDLE_WIDTH_PX = 12;
 var MultiColumnLayoutPlugin = class extends Plugin {
   async onload() {
     await this.loadSettings();
@@ -266,6 +267,11 @@ var MultiColumnLayoutPlugin = class extends Plugin {
       this.applyColumnWidths(el);
       this.attachColumnResizers(el, ctx);
     });
+    this.registerEvent(
+      this.app.workspace.on("resize", () => {
+        this.repositionAllColumnResizers();
+      })
+    );
     this.registerEditorExtension(buildMultiColumnEditorExtensions(this));
   }
   getCM6EditorView(markdownView) {
@@ -498,6 +504,32 @@ var MultiColumnLayoutPlugin = class extends Plugin {
       }
     });
   }
+  repositionAllColumnResizers() {
+    requestAnimationFrame(() => {
+      const containers = document.querySelectorAll('div.callout[data-callout="multi-column"]');
+      containers.forEach((container) => {
+        var _a;
+        const content = container.querySelector(":scope > .callout-content") || container.querySelector(".callout-content");
+        if (!content) return;
+        const handles = content.querySelectorAll(":scope > .mcl-resizer");
+        if (handles.length === 0) return;
+        const cols = Array.from(content.children).filter(
+          (child) => child instanceof HTMLElement && child.matches('div.callout[data-callout="col"]')
+        );
+        if (cols.length < 2) return;
+        const topInset = ((_a = getComputedStyle(container).getPropertyValue("--mcl-divider-inset")) == null ? void 0 : _a.trim()) || "1rem";
+        for (let i = 0; i < cols.length - 1; i++) {
+          const handle = content.querySelector(`:scope > .mcl-resizer[data-index="${i}"]`);
+          if (!handle) continue;
+          const x = cols[i].offsetLeft + cols[i].offsetWidth;
+          handle.style.left = `${x - RESIZER_HANDLE_WIDTH_PX / 2}px`;
+          handle.style.top = topInset;
+          handle.style.bottom = topInset;
+          handle.style.width = `${RESIZER_HANDLE_WIDTH_PX}px`;
+        }
+      });
+    });
+  }
   attachColumnResizers(rootEl, ctx) {
     const containers = rootEl.querySelectorAll('div.callout[data-callout="multi-column"]');
     containers.forEach((container) => {
@@ -536,7 +568,6 @@ var MultiColumnLayoutPlugin = class extends Plugin {
         delete container.dataset.mclLineStart;
         delete container.dataset.mclLineEnd;
       }
-      const handleWidth = 12;
       const positionHandles = () => {
         var _a2;
         const topInset = ((_a2 = getComputedStyle(container).getPropertyValue("--mcl-divider-inset")) == null ? void 0 : _a2.trim()) || "1rem";
@@ -544,10 +575,10 @@ var MultiColumnLayoutPlugin = class extends Plugin {
           const handle = content.querySelector(`:scope > .mcl-resizer[data-index="${i}"]`);
           if (!handle) continue;
           const x = cols[i].offsetLeft + cols[i].offsetWidth;
-          handle.style.left = `${x - handleWidth / 2}px`;
+          handle.style.left = `${x - RESIZER_HANDLE_WIDTH_PX / 2}px`;
           handle.style.top = topInset;
           handle.style.bottom = topInset;
-          handle.style.width = `${handleWidth}px`;
+          handle.style.width = `${RESIZER_HANDLE_WIDTH_PX}px`;
         }
       };
       for (let i = 0; i < cols.length - 1; i++) {
@@ -557,13 +588,13 @@ var MultiColumnLayoutPlugin = class extends Plugin {
         handle.setAttribute("aria-label", "Resize columns");
         content.insertBefore(handle, cols[i + 1]);
         const onMouseDown = (ev) => {
-          var _a2;
+          var _a2, _b2;
           if (ev.button !== 0) return;
           ev.preventDefault();
           ev.stopPropagation();
           const view = this.app.workspace.getActiveViewOfType(MarkdownView);
           const editor = (_a2 = view == null ? void 0 : view.editor) != null ? _a2 : null;
-          if (!editor || !(view == null ? void 0 : view.file) || sourcePath && view.file.path !== sourcePath) {
+          if (((_b2 = view == null ? void 0 : view.getMode) == null ? void 0 : _b2.call(view)) !== "source" || !editor || !(view == null ? void 0 : view.file) || sourcePath && view.file.path !== sourcePath) {
             new Notice("Please use Live Preview (editable) to resize columns.");
             return;
           }
@@ -614,7 +645,7 @@ var MultiColumnLayoutPlugin = class extends Plugin {
             applyRatiosToDOM();
           };
           const onUp = (upEv) => {
-            var _a3, _b2, _c2, _d2, _e2, _f2, _g2;
+            var _a3, _b3, _c2, _d2, _e2, _f2, _g2;
             upEv.preventDefault();
             upEv.stopPropagation();
             (_a3 = upEv.stopImmediatePropagation) == null ? void 0 : _a3.call(upEv);
@@ -639,7 +670,7 @@ var MultiColumnLayoutPlugin = class extends Plugin {
             let lineHint = null;
             try {
               const cmView = this.getCM6EditorView(view);
-              const pos = (_b2 = cmView == null ? void 0 : cmView.posAtCoords) == null ? void 0 : _b2.call(cmView, { x: ev.clientX, y: ev.clientY });
+              const pos = (_b3 = cmView == null ? void 0 : cmView.posAtCoords) == null ? void 0 : _b3.call(cmView, { x: ev.clientX, y: ev.clientY });
               if (typeof pos === "number") {
                 if (typeof editor.offsetToPos === "function") {
                   lineHint = editor.offsetToPos(pos).line;

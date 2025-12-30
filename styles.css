@@ -32,6 +32,11 @@
   background: transparent;
 }
 
+/* Read mode is view-only; avoid confusing non-persistent drag interactions. */
+.markdown-preview-view .callout[data-callout="multi-column"] > .callout-content .mcl-resizer {
+  display: none;
+}
+
 .callout[data-callout="multi-column"] > .callout-content .mcl-resizer::after {
   content: "";
   position: absolute;

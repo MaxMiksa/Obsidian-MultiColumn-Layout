@@ -150,6 +150,8 @@ const TEXTS = {
   }
 };
 
+const RESIZER_HANDLE_WIDTH_PX = 12;
+
 class MultiColumnLayoutPlugin extends Plugin {
   async onload() {
     await this.loadSettings();
@@ -167,6 +169,12 @@ class MultiColumnLayoutPlugin extends Plugin {
       this.applyColumnWidths(el);
       this.attachColumnResizers(el, ctx);
     });
+
+    this.registerEvent(
+      this.app.workspace.on("resize", () => {
+        this.repositionAllColumnResizers();
+      })
+    );
 
     this.registerEditorExtension(buildMultiColumnEditorExtensions(this));       
   }
@@ -449,6 +457,35 @@ class MultiColumnLayoutPlugin extends Plugin {
     });
   }
 
+  repositionAllColumnResizers() {
+    // Keep handles aligned after workspace/pane resize (window resize, sidebar toggles, split changes, etc.).
+    requestAnimationFrame(() => {
+      const containers = document.querySelectorAll('div.callout[data-callout="multi-column"]');
+      containers.forEach((container) => {
+        const content = container.querySelector(":scope > .callout-content") || container.querySelector(".callout-content");
+        if (!content) return;
+        const handles = content.querySelectorAll(":scope > .mcl-resizer");
+        if (handles.length === 0) return;
+
+        const cols = Array.from(content.children).filter(
+          (child) => child instanceof HTMLElement && child.matches('div.callout[data-callout="col"]')
+        ) as HTMLElement[];
+        if (cols.length < 2) return;
+
+        const topInset = getComputedStyle(container).getPropertyValue("--mcl-divider-inset")?.trim() || "1rem";
+        for (let i = 0; i < cols.length - 1; i++) {
+          const handle = content.querySelector(`:scope > .mcl-resizer[data-index="${i}"]`) as HTMLElement | null;
+          if (!handle) continue;
+          const x = cols[i].offsetLeft + cols[i].offsetWidth;
+          handle.style.left = `${x - RESIZER_HANDLE_WIDTH_PX / 2}px`;
+          handle.style.top = topInset;
+          handle.style.bottom = topInset;
+          handle.style.width = `${RESIZER_HANDLE_WIDTH_PX}px`;
+        }
+      });
+    });
+  }
+
   attachColumnResizers(rootEl, ctx) {
     const containers = rootEl.querySelectorAll('div.callout[data-callout="multi-column"]');
     containers.forEach((container) => {
@@ -493,18 +530,16 @@ class MultiColumnLayoutPlugin extends Plugin {
         delete container.dataset.mclLineEnd;
       }
 
-      const handleWidth = 12;
-
       const positionHandles = () => {
         const topInset = getComputedStyle(container).getPropertyValue("--mcl-divider-inset")?.trim() || "1rem";
         for (let i = 0; i < cols.length - 1; i++) {
           const handle = content.querySelector(`:scope > .mcl-resizer[data-index="${i}"]`) as HTMLElement | null;
           if (!handle) continue;
           const x = cols[i].offsetLeft + cols[i].offsetWidth;
-          handle.style.left = `${x - handleWidth / 2}px`;
+          handle.style.left = `${x - RESIZER_HANDLE_WIDTH_PX / 2}px`;
           handle.style.top = topInset;
           handle.style.bottom = topInset;
-          handle.style.width = `${handleWidth}px`;
+          handle.style.width = `${RESIZER_HANDLE_WIDTH_PX}px`;
         }
       };
 
@@ -523,7 +558,7 @@ class MultiColumnLayoutPlugin extends Plugin {
 
             const view = this.app.workspace.getActiveViewOfType(MarkdownView);
             const editor = view?.editor ?? null;
-            if (!editor || !view?.file || (sourcePath && view.file.path !== sourcePath)) {
+            if (view?.getMode?.() !== "source" || !editor || !view?.file || (sourcePath && view.file.path !== sourcePath)) {
               new Notice("Please use Live Preview (editable) to resize columns.");
               return;
             }
