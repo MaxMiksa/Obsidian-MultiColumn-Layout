@@ -32,6 +32,24 @@ Multi-Column Layout is an Obsidian plugin that simplifies the creation of side-b
 | **✍️ In-Column Editing** | In Live Preview, Enter and multi-line paste keep content inside the current column automatically (`>>/>>>>`). |
 | **🔗 Compatibility** | Uses standard Markdown/Callout syntax for maximum portability. |
 
+## 📥 Installation
+
+### Method 1: Using BRAT Plugin (Recommended)
+This is the easiest way to install and keep the plugin updated before the official release.
+1. Install **BRAT** from the Community Plugins in Obsidian.
+2. Open BRAT settings and click **Add Beta plugin**.
+3. Enter the repository URL: `https://github.com/MaxMiksa/Obsidian-MultiColumn-Layout`
+4. Click **Add Plugin**.
+
+### Method 2: Manual Installation
+1. Download `main.js`, `manifest.json`, and `styles.css` from the [Releases](../../releases) page.
+2. Create a folder named `multi-column-layout` inside `.obsidian/plugins/` in your vault.
+3. Place the downloaded files into that folder.
+4. Reload Obsidian and enable the plugin.
+
+### Method 3: Community Plugins
+The plugin has been submitted for review and is expected to be available around **late January 2026**. Once approved, you can search for "Multi-Column Layout" directly in the community store.
+
 ## 🚀 Usage Guide
 
 <img src="Presentation/smart-paste.png" align="right" width="360" alt="Smart Paste Demo">

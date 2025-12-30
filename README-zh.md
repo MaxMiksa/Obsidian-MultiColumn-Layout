@@ -32,6 +32,23 @@ Multi-Column Layout 是一款 Obsidian 插件，旨在通过简单的 Callout �
 | **✍️ 列内编辑增强** | Live Preview 下在列内按 Enter / 粘贴多行会自动维护 `>>/>>>>` 前缀，避免内容跑出分栏。 |
 | **🔗 兼容性强** | 基于标准 Markdown/Callout 语法，即使不安装插件内容依然可读。 |
 
+## 📥 安装方法
+
+### 方法一：使用 BRAT 插件（推荐）
+这是目前最方便的安装方式，可以自动保持插件更新。
+1. 在 Obsidian 社区插件中安装 **BRAT**。
+2. 打开 BRAT 设置，点击 **Add Beta plugin**。
+3. 输入本仓库地址：`https://github.com/MaxMiksa/Obsidian-MultiColumn-Layout`
+4. 点击 **Add Plugin** 即可。
+
+### 方法二：手动安装
+1. 前往 [Releases](../../releases) 页面下载最新的 `main.js`, `manifest.json`, `styles.css`。
+2. 将文件放入您的库目录 `.obsidian/plugins/multi-column-layout/` 文件夹中。
+3. 重启 Obsidian 并启用插件。
+
+### 方法三：官方社区插件市场
+插件已提交审核，预计 **2026年1月底** 上架。届时您可以在社区插件市场直接搜索 "Multi-Column Layout" 安装。
+
 ## 🚀 使用指南
 
 <img src="Presentation/smart-paste.png" align="right" width="360" alt="Smart Paste Demo">
