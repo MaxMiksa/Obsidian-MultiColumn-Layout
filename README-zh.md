@@ -15,7 +15,9 @@ Multi-Column Layout 是一款 Obsidian 插件，旨在通过简单的 Callout �
   <a href="Presentation/demo.md">点击查看如何利用本插件的语法生成上方的样式</a>
 </p>
 
-<img src="Presentation/resizer.gif" alt="Column Resizer Demo" width="800">
+<p align="center">
+  <img src="Presentation/resizer.gif" alt="Column Resizer Demo" width="800">
+</p>
 
 ## ✨ 功能特性
 

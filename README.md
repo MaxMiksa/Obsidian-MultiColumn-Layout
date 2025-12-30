@@ -15,7 +15,9 @@ Multi-Column Layout is an Obsidian plugin that simplifies the creation of side-b
   <a href="Presentation/demo.md">Click to view how to generate the style above using this plugin's syntax</a>
 </p>
 
-<img src="Presentation/resizer.gif" alt="Column Resizer Demo" width="800">
+<p align="center">
+  <img src="Presentation/resizer.gif" alt="Column Resizer Demo" width="800">
+</p>
 
 ## ✨ Features
 
