@@ -22,8 +22,34 @@
   align-items: stretch;
 }
 
+/* Custom ratio modal UI (avoid inline styles; keep themable) */
+.mcl-modal-instruction {
+  color: var(--text-muted);
+  margin-bottom: 1rem;
+}
+
+.mcl-modal-input {
+  width: 100%;
+}
+
+.mcl-modal-error {
+  color: var(--text-error);
+  margin-top: 0.5rem;
+  display: none;
+}
+
+.mcl-modal-error.is-visible {
+  display: block;
+}
+
+.mcl-modal-buttons {
+  margin-top: 1rem;
+  display: flex;
+  justify-content: flex-end;
+}
+
 /* Drag Resizer Handles (Live Preview / Reading Mode) */
-.callout[data-callout="multi-column"] > .callout-content .mcl-resizer {
+.callout[data-callout="multi-column"] > .callout-content .mcl-resizer {   
   position: absolute;
   z-index: 20;
   cursor: col-resize;

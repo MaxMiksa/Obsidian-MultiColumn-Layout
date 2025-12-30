@@ -1,6 +1,6 @@
 // src/editor/extensions.ts
-var { EditorSelection, Prec, Transaction } = require("@codemirror/state");
-var { EditorView, keymap } = require("@codemirror/view");
+var import_state = require("@codemirror/state");
+var import_view = require("@codemirror/view");
 function insertNewlineWithColumnPrefix(view, ctx) {
   const range = view.state.selection.main;
   const insertText = `
@@ -8,8 +8,8 @@ ${ctx.prefixWithSpace}`;
   const anchor = range.from + insertText.length;
   view.dispatch({
     changes: { from: range.from, to: range.to, insert: insertText },
-    selection: EditorSelection.cursor(anchor),
-    annotations: Transaction.userEvent.of("input.enter")
+    selection: import_state.EditorSelection.cursor(anchor),
+    annotations: import_state.Transaction.userEvent.of("input.enter")
   });
   return true;
 }
@@ -67,8 +67,8 @@ ${ctx.prefixWithSpace}${line}`;
 }
 function buildMultiColumnEditorExtensions(_plugin) {
   return [
-    Prec.high(
-      keymap.of([
+    import_state.Prec.high(
+      import_view.keymap.of([
         {
           key: "Enter",
           run(view) {
@@ -79,7 +79,7 @@ function buildMultiColumnEditorExtensions(_plugin) {
         }
       ])
     ),
-    EditorView.domEventHandlers({
+    import_view.EditorView.domEventHandlers({
       paste(event, view) {
         var _a;
         const ctx = getColumnContext(view);
@@ -97,8 +97,8 @@ function buildMultiColumnEditorExtensions(_plugin) {
         const anchor = range.from + insertText.length;
         view.dispatch({
           changes: { from: range.from, to: range.to, insert: insertText },
-          selection: EditorSelection.cursor(anchor),
-          annotations: Transaction.userEvent.of("input.paste")
+          selection: import_state.EditorSelection.cursor(anchor),
+          annotations: import_state.Transaction.userEvent.of("input.paste")
         });
       }
     })
@@ -106,7 +106,7 @@ function buildMultiColumnEditorExtensions(_plugin) {
 }
 
 // src/main.ts
-var { Plugin, Menu, MarkdownView, PluginSettingTab, Setting, Modal, Notice } = require("obsidian");
+var import_obsidian = require("obsidian");
 var DEFAULT_SETTINGS = {
   language: "en",
   dividerWidth: "1px",
@@ -253,7 +253,11 @@ var TEXTS = {
   }
 };
 var RESIZER_HANDLE_WIDTH_PX = 12;
-var MultiColumnLayoutPlugin = class extends Plugin {
+var MultiColumnLayoutPlugin = class extends import_obsidian.Plugin {
+  constructor() {
+    super(...arguments);
+    this.settings = DEFAULT_SETTINGS;
+  }
   async onload() {
     await this.loadSettings();
     this.addSettingTab(new MultiColumnLayoutSettingTab(this.app, this));
@@ -276,12 +280,22 @@ var MultiColumnLayoutPlugin = class extends Plugin {
   }
   getCM6EditorView(markdownView) {
     var _a, _b, _c, _d;
-    const editorAny = markdownView == null ? void 0 : markdownView.editor;
-    return (_d = (_c = (_b = (_a = editorAny == null ? void 0 : editorAny.cm) == null ? void 0 : _a.cm) != null ? _b : editorAny == null ? void 0 : editorAny.cm) != null ? _c : editorAny == null ? void 0 : editorAny.editorView) != null ? _d : null;
+    const editor = markdownView == null ? void 0 : markdownView.editor;
+    if (!editor) return null;
+    const editorUnknown = editor;
+    const maybeCM = editorUnknown.cm;
+    if (maybeCM && typeof maybeCM === "object") {
+      const cmUnknown = maybeCM;
+      const nested = (_b = (_a = cmUnknown.cm) != null ? _a : cmUnknown.editorView) != null ? _b : null;
+      return nested && typeof nested === "object" ? nested : null;
+    }
+    const direct = (_d = (_c = editorUnknown.cm) != null ? _c : editorUnknown.editorView) != null ? _d : null;
+    return direct && typeof direct === "object" ? direct : null;
   }
   t(key, ...args) {
     const lang = this.settings.language || "en";
-    let str = TEXTS[lang][key] || TEXTS["en"][key] || key;
+    const langKey = lang in TEXTS ? lang : "en";
+    let str = TEXTS[langKey][key] || TEXTS["en"][key] || key;
     args.forEach((arg, i) => {
       str = str.replace(`{${i}}`, arg);
     });
@@ -407,7 +421,7 @@ var MultiColumnLayoutPlugin = class extends Plugin {
     this.insertNestedHere(activeEditor, innerCols);
   }
   getActiveEditor() {
-    const view = this.app.workspace.getActiveViewOfType(MarkdownView);
+    const view = this.app.workspace.getActiveViewOfType(import_obsidian.MarkdownView);
     return view ? view.editor : null;
   }
   insertColumnLayout(editor, columnCount, ratios, metadata = "") {
@@ -500,7 +514,6 @@ var MultiColumnLayoutPlugin = class extends Plugin {
       const width = parseInt(raw, 10);
       if (Number.isFinite(width) && width > 0 && width <= 100) {
         col.style.flex = `0 0 ${width}%`;
-        col.style.minWidth = "0";
       }
     });
   }
@@ -513,9 +526,8 @@ var MultiColumnLayoutPlugin = class extends Plugin {
         if (!content) return;
         const handles = content.querySelectorAll(":scope > .mcl-resizer");
         if (handles.length === 0) return;
-        const cols = Array.from(content.children).filter(
-          (child) => child instanceof HTMLElement && child.matches('div.callout[data-callout="col"]')
-        );
+        const isColEl = (child) => child instanceof HTMLElement && child.matches('div.callout[data-callout="col"]');
+        const cols = Array.from(content.children).filter(isColEl);
         if (cols.length < 2) return;
         const topInset = ((_a = getComputedStyle(container).getPropertyValue("--mcl-divider-inset")) == null ? void 0 : _a.trim()) || "1rem";
         for (let i = 0; i < cols.length - 1; i++) {
@@ -538,9 +550,8 @@ var MultiColumnLayoutPlugin = class extends Plugin {
       if (!content) return;
       if (content.classList.contains("mcl-resizing")) return;
       content.querySelectorAll(":scope > .mcl-resizer").forEach((el) => el.remove());
-      const cols = Array.from(content.children).filter(
-        (child) => child instanceof HTMLElement && child.matches('div.callout[data-callout="col"]')
-      );
+      const isColEl = (child) => child instanceof HTMLElement && child.matches('div.callout[data-callout="col"]');
+      const cols = Array.from(content.children).filter(isColEl);
       if (cols.length < 2) return;
       try {
         let expectedDepth = 1;
@@ -556,7 +567,7 @@ var MultiColumnLayoutPlugin = class extends Plugin {
         delete container.dataset.mclExpectedDepth;
       }
       const section = (_d = (_c = (_a = ctx == null ? void 0 : ctx.getSectionInfo) == null ? void 0 : _a.call(ctx, container)) != null ? _c : (_b = ctx == null ? void 0 : ctx.getSectionInfo) == null ? void 0 : _b.call(ctx, rootEl)) != null ? _d : null;
-      const initialView = this.app.workspace.getActiveViewOfType(MarkdownView);
+      const initialView = this.app.workspace.getActiveViewOfType(import_obsidian.MarkdownView);
       const sourcePath = (_g = (_f = ctx == null ? void 0 : ctx.sourcePath) != null ? _f : (_e = initialView == null ? void 0 : initialView.file) == null ? void 0 : _e.path) != null ? _g : null;
       if (sourcePath) {
         container.dataset.mclSourcePath = sourcePath;
@@ -592,10 +603,10 @@ var MultiColumnLayoutPlugin = class extends Plugin {
           if (ev.button !== 0) return;
           ev.preventDefault();
           ev.stopPropagation();
-          const view = this.app.workspace.getActiveViewOfType(MarkdownView);
+          const view = this.app.workspace.getActiveViewOfType(import_obsidian.MarkdownView);
           const editor = (_a2 = view == null ? void 0 : view.editor) != null ? _a2 : null;
           if (((_b2 = view == null ? void 0 : view.getMode) == null ? void 0 : _b2.call(view)) !== "source" || !editor || !(view == null ? void 0 : view.file) || sourcePath && view.file.path !== sourcePath) {
-            new Notice("Please use Live Preview (editable) to resize columns.");
+            new import_obsidian.Notice("Please use Live preview (editable) to resize columns.");
             return;
           }
           const containerRect = content.getBoundingClientRect();
@@ -625,16 +636,14 @@ var MultiColumnLayoutPlugin = class extends Plugin {
           const applyRatiosToDOM = () => {
             for (let k = 0; k < cols.length; k++) {
               cols[k].style.flex = `0 0 ${ratios[k]}%`;
-              cols[k].style.minWidth = "0";
               cols[k].setAttribute("data-callout-metadata", String(ratios[k]));
             }
             positionHandles();
           };
           const onMove = (moveEv) => {
-            var _a3;
             moveEv.preventDefault();
             moveEv.stopPropagation();
-            (_a3 = moveEv.stopImmediatePropagation) == null ? void 0 : _a3.call(moveEv);
+            moveEv.stopImmediatePropagation();
             const mouseX = moveEv.clientX;
             const rel = Math.min(Math.max(mouseX - containerRect.left, 0), totalWidth);
             const targetPct = Math.round(rel / totalWidth * 100);
@@ -645,10 +654,10 @@ var MultiColumnLayoutPlugin = class extends Plugin {
             applyRatiosToDOM();
           };
           const onUp = (upEv) => {
-            var _a3, _b3, _c2, _d2, _e2, _f2, _g2;
+            var _a3, _b3, _c2, _d2, _e2, _f2;
             upEv.preventDefault();
             upEv.stopPropagation();
-            (_a3 = upEv.stopImmediatePropagation) == null ? void 0 : _a3.call(upEv);
+            upEv.stopImmediatePropagation();
             window.removeEventListener("mousemove", onMove, true);
             window.removeEventListener("mouseup", onUp, true);
             content.classList.remove("mcl-resizing");
@@ -670,17 +679,17 @@ var MultiColumnLayoutPlugin = class extends Plugin {
             let lineHint = null;
             try {
               const cmView = this.getCM6EditorView(view);
-              const pos = (_b3 = cmView == null ? void 0 : cmView.posAtCoords) == null ? void 0 : _b3.call(cmView, { x: ev.clientX, y: ev.clientY });
+              const pos = (_a3 = cmView == null ? void 0 : cmView.posAtCoords) == null ? void 0 : _a3.call(cmView, { x: ev.clientX, y: ev.clientY });
               if (typeof pos === "number") {
                 if (typeof editor.offsetToPos === "function") {
                   lineHint = editor.offsetToPos(pos).line;
-                } else if ((_d2 = (_c2 = cmView == null ? void 0 : cmView.state) == null ? void 0 : _c2.doc) == null ? void 0 : _d2.lineAt) {
+                } else if ((_c2 = (_b3 = cmView == null ? void 0 : cmView.state) == null ? void 0 : _b3.doc) == null ? void 0 : _c2.lineAt) {
                   lineHint = cmView.state.doc.lineAt(pos).number - 1;
                 }
               }
             } catch (e) {
             }
-            const sectionNow = (_g2 = (_f2 = (_e2 = ctx == null ? void 0 : ctx.getSectionInfo) == null ? void 0 : _e2.call(ctx, container)) != null ? _f2 : section) != null ? _g2 : null;
+            const sectionNow = (_f2 = (_e2 = (_d2 = ctx == null ? void 0 : ctx.getSectionInfo) == null ? void 0 : _d2.call(ctx, container)) != null ? _e2 : section) != null ? _f2 : null;
             if (sectionNow) {
               container.dataset.mclLineStart = String(sectionNow.lineStart);
               container.dataset.mclLineEnd = String(sectionNow.lineEnd);
@@ -708,13 +717,13 @@ var MultiColumnLayoutPlugin = class extends Plugin {
   }
   writeBackColumnRatios(containerEl, ratios, ctx) {
     var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u;
-    const view = this.app.workspace.getActiveViewOfType(MarkdownView);
+    const view = this.app.workspace.getActiveViewOfType(import_obsidian.MarkdownView);
     const editor = (_b = (_a = ctx == null ? void 0 : ctx.editor) != null ? _a : view == null ? void 0 : view.editor) != null ? _b : null;
     const activePath = (_d = (_c = view == null ? void 0 : view.file) == null ? void 0 : _c.path) != null ? _d : null;
     const dsPath = (_f = (_e = containerEl == null ? void 0 : containerEl.dataset) == null ? void 0 : _e.mclSourcePath) != null ? _f : null;
     const sourcePath = (_h = (_g = ctx == null ? void 0 : ctx.sourcePath) != null ? _g : dsPath) != null ? _h : activePath;
     if (!activePath || !editor || sourcePath && activePath !== sourcePath) {
-      new Notice("Resize applied visually, but write-back requires the note to be open in Live Preview.");
+      new import_obsidian.Notice("Resize applied visually, but write-back requires the note to be open in Live preview.");
       return;
     }
     const parseMaybeInt = (v) => {
@@ -811,12 +820,12 @@ var MultiColumnLayoutPlugin = class extends Plugin {
     };
     const found = (_s = findBestHeaderAndCols(expectedDepth)) != null ? _s : expectedDepth != null ? findBestHeaderAndCols(null) : null;
     if (!found) {
-      new Notice("Resize applied visually, but failed to locate the multi-column block for write-back.");
+      new import_obsidian.Notice("Resize applied visually, but failed to locate the multi-column block for write-back.");
       return;
     }
     const { colLines } = found;
     if (colLines.length !== ratios.length) {
-      new Notice(`Resize write-back failed: expected ${ratios.length} columns, found ${colLines.length}.`);
+      new import_obsidian.Notice(`Resize write-back failed: expected ${ratios.length} columns, found ${colLines.length}.`);
       return;
     }
     const rewriteColHeader = (lineText, ratio) => {
@@ -906,11 +915,11 @@ var MultiColumnLayoutPlugin = class extends Plugin {
     editor.focus();
     const colDepth = this.getColDepthAtCursor(editor);
     if (!colDepth) {
-      new Notice(this.t("notice.nested.notInCol"));
+      new import_obsidian.Notice(this.t("notice.nested.notInCol"));
       return;
     }
     if (colDepth !== 2) {
-      new Notice(this.t("notice.nested.limit"));
+      new import_obsidian.Notice(this.t("notice.nested.limit"));
       return;
     }
     const metaParts = ["bordered"];
@@ -955,7 +964,7 @@ ${block}`, { line: lastLine, ch: lastCh });
     }
   }
 };
-var CustomRatioModal = class extends Modal {
+var CustomRatioModal = class extends import_obsidian.Modal {
   constructor(app, plugin, onSubmit) {
     super(app);
     this.plugin = plugin;
@@ -963,39 +972,41 @@ var CustomRatioModal = class extends Modal {
   }
   onOpen() {
     const { contentEl } = this;
-    contentEl.createEl("h2", { text: this.plugin.t("modal.title") });
+    new import_obsidian.Setting(contentEl).setName(this.plugin.t("modal.title")).setHeading();
     const instruction = contentEl.createEl("p", { text: this.plugin.t("modal.instruction") });
-    instruction.style.color = "var(--text-muted)";
-    instruction.style.marginBottom = "1rem";
+    instruction.addClass("mcl-modal-instruction");
     const inputContainer = contentEl.createDiv();
     const input = inputContainer.createEl("input", { type: "text", placeholder: "50/50" });
-    input.style.width = "100%";
+    input.addClass("mcl-modal-input");
     input.focus();
     const errorMsg = contentEl.createEl("p", { text: "" });
-    errorMsg.style.color = "var(--text-error)";
-    errorMsg.style.marginTop = "0.5rem";
-    errorMsg.style.display = "none";
+    errorMsg.addClass("mcl-modal-error");
     const btnContainer = contentEl.createDiv();
-    btnContainer.style.marginTop = "1rem";
-    btnContainer.style.display = "flex";
-    btnContainer.style.justifyContent = "flex-end";
+    btnContainer.addClass("mcl-modal-buttons");
     const submitBtn = btnContainer.createEl("button", { text: this.plugin.t("modal.insert") });
     submitBtn.addClass("mod-cta");
+    const showError = (message) => {
+      errorMsg.textContent = message;
+      errorMsg.addClass("is-visible");
+    };
+    const clearError = () => {
+      errorMsg.textContent = "";
+      errorMsg.removeClass("is-visible");
+    };
     const validateAndSubmit = () => {
       const val = input.value.trim();
       if (!val) return;
       const parts = val.split("/").map((p) => parseInt(p.trim(), 10));
       const sum = parts.reduce((a, b) => a + (isNaN(b) ? 0 : b), 0);
       if (parts.some(isNaN)) {
-        errorMsg.text = this.plugin.t("modal.error.format");
-        errorMsg.style.display = "block";
+        showError(this.plugin.t("modal.error.format"));
         return;
       }
       if (sum !== 100) {
-        errorMsg.text = this.plugin.t("modal.error.sum", sum);
-        errorMsg.style.display = "block";
+        showError(this.plugin.t("modal.error.sum", sum));
         return;
       }
+      clearError();
       this.onSubmit(parts.length, parts);
       this.close();
     };
@@ -1009,7 +1020,7 @@ var CustomRatioModal = class extends Modal {
     contentEl.empty();
   }
 };
-var MultiColumnLayoutSettingTab = class extends PluginSettingTab {
+var MultiColumnLayoutSettingTab = class extends import_obsidian.PluginSettingTab {
   constructor(app, plugin) {
     super(app, plugin);
     this.plugin = plugin;
@@ -1017,18 +1028,19 @@ var MultiColumnLayoutSettingTab = class extends PluginSettingTab {
   display() {
     const { containerEl } = this;
     containerEl.empty();
-    containerEl.createEl("h2", { text: this.plugin.t("settings.title") });
-    new Setting(containerEl).setName(this.plugin.t("settings.general")).setHeading();
-    new Setting(containerEl).setName(this.plugin.t("settings.language")).setDesc(this.plugin.t("settings.language.desc")).addDropdown(
+    new import_obsidian.Setting(containerEl).setName(this.plugin.t("settings.title")).setHeading();
+    new import_obsidian.Setting(containerEl).setName(this.plugin.t("settings.general")).setHeading();
+    new import_obsidian.Setting(containerEl).setName(this.plugin.t("settings.language")).setDesc(this.plugin.t("settings.language.desc")).addDropdown(
       (dropdown) => dropdown.addOption("en", "English").addOption("zh", "\u7B80\u4F53\u4E2D\u6587").setValue(this.plugin.settings.language).onChange(async (value) => {
+        if (value !== "en" && value !== "zh") return;
         this.plugin.settings.language = value;
         await this.plugin.saveSettings();
         this.display();
       })
     );
     this.addColorDropdown(containerEl, "backgroundColor", this.plugin.t("settings.background"), this.plugin.t("settings.background.desc"));
-    new Setting(containerEl).setName(this.plugin.t("settings.border")).setHeading();
-    new Setting(containerEl).setName(this.plugin.t("settings.border.enable")).setDesc(this.plugin.t("settings.border.enable.desc")).addToggle(
+    new import_obsidian.Setting(containerEl).setName(this.plugin.t("settings.border")).setHeading();
+    new import_obsidian.Setting(containerEl).setName(this.plugin.t("settings.border.enable")).setDesc(this.plugin.t("settings.border.enable.desc")).addToggle(
       (toggle) => toggle.setValue(this.plugin.settings.borderEnabled).onChange(async (value) => {
         this.plugin.settings.borderEnabled = value;
         await this.plugin.saveSettings();
@@ -1047,22 +1059,22 @@ var MultiColumnLayoutSettingTab = class extends PluginSettingTab {
       "",
       { min: 0, max: 2, step: 0.1, unit: "rem" }
     );
-    new Setting(containerEl).setName(this.plugin.t("settings.vertical")).setHeading();
+    new import_obsidian.Setting(containerEl).setName(this.plugin.t("settings.vertical")).setHeading();
     this.addPixelControl(
       containerEl,
       "dividerWidth",
       this.plugin.t("settings.width"),
       this.plugin.t("settings.width.desc")
     );
-    new Setting(containerEl).setName(this.plugin.t("settings.style")).setDesc(this.plugin.t("settings.style.desc")).addDropdown(
+    new import_obsidian.Setting(containerEl).setName(this.plugin.t("settings.style")).setDesc(this.plugin.t("settings.style.desc")).addDropdown(
       (dropdown) => dropdown.addOption("solid", this.plugin.t("style.solid")).addOption("dashed", this.plugin.t("style.dashed")).addOption("dotted", this.plugin.t("style.dotted")).addOption("double", this.plugin.t("style.double")).setValue(this.plugin.settings.dividerStyle).onChange(async (value) => {
         this.plugin.settings.dividerStyle = value;
         await this.plugin.saveSettings();
       })
     );
     this.addColorDropdown(containerEl, "dividerColor", this.plugin.t("settings.color"), this.plugin.t("settings.color.desc"));
-    new Setting(containerEl).setName(this.plugin.t("settings.horizontal")).setHeading();
-    new Setting(containerEl).setName(this.plugin.t("settings.horz.enable")).setDesc(this.plugin.t("settings.horz.enable.desc")).addToggle(
+    new import_obsidian.Setting(containerEl).setName(this.plugin.t("settings.horizontal")).setHeading();
+    new import_obsidian.Setting(containerEl).setName(this.plugin.t("settings.horz.enable")).setDesc(this.plugin.t("settings.horz.enable.desc")).addToggle(
       (toggle) => toggle.setValue(this.plugin.settings.horzDivider).onChange(async (value) => {
         this.plugin.settings.horzDivider = value;
         await this.plugin.saveSettings();
@@ -1074,29 +1086,29 @@ var MultiColumnLayoutSettingTab = class extends PluginSettingTab {
       this.plugin.t("settings.width"),
       ""
     );
-    new Setting(containerEl).setName(this.plugin.t("settings.style")).addDropdown(
+    new import_obsidian.Setting(containerEl).setName(this.plugin.t("settings.style")).addDropdown(
       (dropdown) => dropdown.addOption("solid", this.plugin.t("style.solid")).addOption("dashed", this.plugin.t("style.dashed")).addOption("dotted", this.plugin.t("style.dotted")).addOption("double", this.plugin.t("style.double")).setValue(this.plugin.settings.horzDividerStyle).onChange(async (value) => {
         this.plugin.settings.horzDividerStyle = value;
         await this.plugin.saveSettings();
       })
     );
     this.addColorDropdown(containerEl, "horzDividerColor", this.plugin.t("settings.color"), "");
-    const migrateSetting = new Setting(containerEl).setName(this.plugin.t("settings.migrate")).setDesc(this.plugin.t("settings.migrate.desc")).addButton(
+    const migrateSetting = new import_obsidian.Setting(containerEl).setName(this.plugin.t("settings.migrate")).setDesc(this.plugin.t("settings.migrate.desc")).addButton(
       (button) => button.setButtonText(this.plugin.t("settings.migrate")).setCta().onClick(async () => {
-        new Notice(this.plugin.t("settings.migrate.running"));
+        new import_obsidian.Notice(this.plugin.t("settings.migrate.running"));
         try {
           const updated = await this.plugin.applyAppearanceToAllFiles();
-          new Notice(this.plugin.t("settings.migrate.done", updated));
+          new import_obsidian.Notice(this.plugin.t("settings.migrate.done", updated));
         } catch (err) {
           console.error(err);
-          new Notice(this.plugin.t("settings.migrate.error"));
+          new import_obsidian.Notice(this.plugin.t("settings.migrate.error"));
         }
       })
     );
     migrateSetting.settingEl.addClass("multi-column-apply-all");
   }
   addColorDropdown(containerEl, settingKey, name, desc) {
-    new Setting(containerEl).setName(name).setDesc(desc).addDropdown((dropdown) => {
+    new import_obsidian.Setting(containerEl).setName(name).setDesc(desc).addDropdown((dropdown) => {
       Object.keys(PRESET_COLORS).forEach((color) => {
         dropdown.addOption(color, this.plugin.colorLabel(color));
       });
@@ -1118,7 +1130,7 @@ var MultiColumnLayoutSettingTab = class extends PluginSettingTab {
     };
     const clamp = (num, min2, max2) => Math.min(max2, Math.max(min2, num));
     const current = clamp(parseNumber(this.plugin.settings[settingKey]), min, max);
-    const setting = new Setting(containerEl).setName(name);
+    const setting = new import_obsidian.Setting(containerEl).setName(name);
     if (desc) setting.setDesc(desc);
     let textRef;
     let sliderRef;
@@ -1126,7 +1138,7 @@ var MultiColumnLayoutSettingTab = class extends PluginSettingTab {
     setting.addSlider((slider) => {
       sliderRef = slider;
       slider.setLimits(min, max, step).setValue(current).onChange(async (value) => {
-        const n = clamp(parseFloat(value), min, max);
+        const n = clamp(value, min, max);
         this.plugin.settings[settingKey] = format(n);
         if (textRef) textRef.setValue(String(n));
         await this.plugin.saveSettings();

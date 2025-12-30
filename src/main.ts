@@ -1,8 +1,44 @@
 import { buildMultiColumnEditorExtensions } from "./editor/extensions";
 
-const { Plugin, Menu, MarkdownView, PluginSettingTab, Setting, Modal, Notice } = require("obsidian");
+import {
+  MarkdownView,
+  Menu,
+  Modal,
+  Notice,
+  Plugin,
+  PluginSettingTab,
+  Setting,
+  type App,
+  type MarkdownPostProcessorContext
+} from "obsidian";
 
-const DEFAULT_SETTINGS = {
+type CM6EditorViewLike = {
+  posAtCoords?: (coords: { x: number; y: number }) => number | null;
+  state?: { doc?: { lineAt: (pos: number) => { number: number } } };
+};
+
+type MultiColumnLayoutLanguage = "en" | "zh";
+
+type MultiColumnLayoutSettings = {
+  language: MultiColumnLayoutLanguage;
+  dividerWidth: string;
+  dividerStyle: string;
+  dividerColor: string;
+  horzDivider: boolean;
+  horzDividerWidth: string;
+  horzDividerStyle: string;
+  horzDividerColor: string;
+  backgroundColor: string;
+  borderEnabled: boolean;
+  borderWidth: string;
+  borderRadius: string;
+};
+
+type ColorSettingKey = "backgroundColor" | "dividerColor" | "horzDividerColor";
+type PixelSettingKey = "dividerWidth" | "horzDividerWidth" | "borderWidth" | "borderRadius";
+type PixelControlOptions = { min?: number; max?: number; step?: number; unit?: string };
+
+const DEFAULT_SETTINGS: MultiColumnLayoutSettings = {
   language: "en",
   dividerWidth: "1px",
   dividerStyle: "solid",
@@ -153,6 +189,8 @@ const TEXTS = {
 const RESIZER_HANDLE_WIDTH_PX = 12;
 
 class MultiColumnLayoutPlugin extends Plugin {
+  settings: MultiColumnLayoutSettings = DEFAULT_SETTINGS;
+
   async onload() {
     await this.loadSettings();
 
@@ -165,7 +203,7 @@ class MultiColumnLayoutPlugin extends Plugin {
       })
     );
 
-    this.registerMarkdownPostProcessor((el, ctx) => {
+    this.registerMarkdownPostProcessor((el: HTMLElement, ctx: MarkdownPostProcessorContext) => {
       this.applyColumnWidths(el);
       this.attachColumnResizers(el, ctx);
     });
@@ -179,14 +217,26 @@ class MultiColumnLayoutPlugin extends Plugin {
     this.registerEditorExtension(buildMultiColumnEditorExtensions(this));       
   }
 
-  getCM6EditorView(markdownView) {
-    const editorAny = markdownView?.editor as any;
-    return editorAny?.cm?.cm ?? editorAny?.cm ?? editorAny?.editorView ?? null;
+  getCM6EditorView(markdownView: MarkdownView | null | undefined): CM6EditorViewLike | null {
+    const editor = markdownView?.editor;
+    if (!editor) return null;
+
+    const editorUnknown = editor as unknown as { cm?: unknown; editorView?: unknown };
+    const maybeCM = editorUnknown.cm;
+    if (maybeCM && typeof maybeCM === "object") {
+      const cmUnknown = maybeCM as { cm?: unknown; editorView?: unknown };
+      const nested = cmUnknown.cm ?? cmUnknown.editorView ?? null;
+      return nested && typeof nested === "object" ? (nested as CM6EditorViewLike) : null;
+    }
+
+    const direct = editorUnknown.cm ?? editorUnknown.editorView ?? null;
+    return direct && typeof direct === "object" ? (direct as CM6EditorViewLike) : null;
   }
 
-  t(key, ...args) {
+  t(key: string, ...args: Array<string | number>) {
     const lang = this.settings.language || "en";
-    let str = TEXTS[lang][key] || TEXTS["en"][key] || key;
+    const langKey = (lang in TEXTS ? lang : "en") as keyof typeof TEXTS;
+    let str = TEXTS[langKey][key] || TEXTS["en"][key] || key;
     args.forEach((arg, i) => {
       str = str.replace(`{${i}}`, arg);
     });
@@ -445,14 +495,13 @@ class MultiColumnLayoutPlugin extends Plugin {
     return ratios;
   }
 
-  applyColumnWidths(el) {
-    const columns = el.querySelectorAll('div.callout[data-callout="col"][data-callout-metadata]');
+  applyColumnWidths(el: HTMLElement) {
+    const columns = el.querySelectorAll<HTMLElement>('div.callout[data-callout="col"][data-callout-metadata]');
     columns.forEach((col) => {
       const raw = col.getAttribute("data-callout-metadata");
       const width = parseInt(raw, 10);
       if (Number.isFinite(width) && width > 0 && width <= 100) {
         col.style.flex = `0 0 ${width}%`;
-        col.style.minWidth = "0";
       }
     });
   }
@@ -460,21 +509,21 @@ class MultiColumnLayoutPlugin extends Plugin {
   repositionAllColumnResizers() {
     // Keep handles aligned after workspace/pane resize (window resize, sidebar toggles, split changes, etc.).
     requestAnimationFrame(() => {
-      const containers = document.querySelectorAll('div.callout[data-callout="multi-column"]');
+      const containers = document.querySelectorAll<HTMLElement>('div.callout[data-callout="multi-column"]');
       containers.forEach((container) => {
-        const content = container.querySelector(":scope > .callout-content") || container.querySelector(".callout-content");
+        const content = container.querySelector<HTMLElement>(":scope > .callout-content") || container.querySelector<HTMLElement>(".callout-content");
         if (!content) return;
-        const handles = content.querySelectorAll(":scope > .mcl-resizer");
+        const handles = content.querySelectorAll<HTMLElement>(":scope > .mcl-resizer");
         if (handles.length === 0) return;
 
-        const cols = Array.from(content.children).filter(
-          (child) => child instanceof HTMLElement && child.matches('div.callout[data-callout="col"]')
-        ) as HTMLElement[];
+        const isColEl = (child: Element): child is HTMLElement =>
+          child instanceof HTMLElement && child.matches('div.callout[data-callout="col"]');
+        const cols = Array.from(content.children).filter(isColEl);
         if (cols.length < 2) return;
 
         const topInset = getComputedStyle(container).getPropertyValue("--mcl-divider-inset")?.trim() || "1rem";
         for (let i = 0; i < cols.length - 1; i++) {
-          const handle = content.querySelector(`:scope > .mcl-resizer[data-index="${i}"]`) as HTMLElement | null;
+          const handle = content.querySelector<HTMLElement>(`:scope > .mcl-resizer[data-index="${i}"]`);
           if (!handle) continue;
           const x = cols[i].offsetLeft + cols[i].offsetWidth;
           handle.style.left = `${x - RESIZER_HANDLE_WIDTH_PX / 2}px`;
@@ -486,19 +535,19 @@ class MultiColumnLayoutPlugin extends Plugin {
     });
   }
 
-  attachColumnResizers(rootEl, ctx) {
-    const containers = rootEl.querySelectorAll('div.callout[data-callout="multi-column"]');
+  attachColumnResizers(rootEl: HTMLElement, ctx: MarkdownPostProcessorContext) {
+    const containers = rootEl.querySelectorAll<HTMLElement>('div.callout[data-callout="multi-column"]');
     containers.forEach((container) => {
-      const content = container.querySelector(":scope > .callout-content") || container.querySelector(".callout-content");
+      const content = container.querySelector<HTMLElement>(":scope > .callout-content") || container.querySelector<HTMLElement>(".callout-content");
       if (!content) return;
       if (content.classList.contains("mcl-resizing")) return;
 
       // Remove old handles from previous renders
       content.querySelectorAll(":scope > .mcl-resizer").forEach((el) => el.remove());
 
-      const cols = Array.from(content.children).filter(
-        (child) => child instanceof HTMLElement && child.matches('div.callout[data-callout="col"]')
-      ) as HTMLElement[];
+      const isColEl = (child: Element): child is HTMLElement =>
+        child instanceof HTMLElement && child.matches('div.callout[data-callout="col"]');
+      const cols = Array.from(content.children).filter(isColEl);
       if (cols.length < 2) return;
 
       // Best-effort: infer expected blockquote depth from nesting in [!col] callouts (0 -> 1, 1 -> 3, 2 -> 5 ...).
@@ -533,7 +582,7 @@ class MultiColumnLayoutPlugin extends Plugin {
       const positionHandles = () => {
         const topInset = getComputedStyle(container).getPropertyValue("--mcl-divider-inset")?.trim() || "1rem";
         for (let i = 0; i < cols.length - 1; i++) {
-          const handle = content.querySelector(`:scope > .mcl-resizer[data-index="${i}"]`) as HTMLElement | null;
+          const handle = content.querySelector<HTMLElement>(`:scope > .mcl-resizer[data-index="${i}"]`);
           if (!handle) continue;
           const x = cols[i].offsetLeft + cols[i].offsetWidth;
           handle.style.left = `${x - RESIZER_HANDLE_WIDTH_PX / 2}px`;
@@ -559,7 +608,7 @@ class MultiColumnLayoutPlugin extends Plugin {
             const view = this.app.workspace.getActiveViewOfType(MarkdownView);
             const editor = view?.editor ?? null;
             if (view?.getMode?.() !== "source" || !editor || !view?.file || (sourcePath && view.file.path !== sourcePath)) {
-              new Notice("Please use Live Preview (editable) to resize columns.");
+              new Notice("Please use Live preview (editable) to resize columns.");
               return;
             }
 
@@ -596,7 +645,6 @@ class MultiColumnLayoutPlugin extends Plugin {
           const applyRatiosToDOM = () => {
             for (let k = 0; k < cols.length; k++) {
               cols[k].style.flex = `0 0 ${ratios[k]}%`;
-              cols[k].style.minWidth = "0";
               cols[k].setAttribute("data-callout-metadata", String(ratios[k]));
             }
             positionHandles();
@@ -605,7 +653,7 @@ class MultiColumnLayoutPlugin extends Plugin {
           const onMove = (moveEv) => {
             moveEv.preventDefault();
             moveEv.stopPropagation();
-            (moveEv as any).stopImmediatePropagation?.();
+            moveEv.stopImmediatePropagation();
             const mouseX = moveEv.clientX;
             const rel = Math.min(Math.max(mouseX - containerRect.left, 0), totalWidth);
             const targetPct = Math.round((rel / totalWidth) * 100);
@@ -619,7 +667,7 @@ class MultiColumnLayoutPlugin extends Plugin {
           const onUp = (upEv) => {
             upEv.preventDefault();
             upEv.stopPropagation();
-            (upEv as any).stopImmediatePropagation?.();
+            upEv.stopImmediatePropagation();
             window.removeEventListener("mousemove", onMove, true);
             window.removeEventListener("mouseup", onUp, true);
             content.classList.remove("mcl-resizing");
@@ -697,7 +745,7 @@ class MultiColumnLayoutPlugin extends Plugin {
     const sourcePath = ctx?.sourcePath ?? dsPath ?? activePath;
 
     if (!activePath || !editor || (sourcePath && activePath !== sourcePath)) {
-      new Notice("Resize applied visually, but write-back requires the note to be open in Live Preview.");
+      new Notice("Resize applied visually, but write-back requires the note to be open in Live preview.");
       return;
     }
 
@@ -1004,7 +1052,10 @@ class MultiColumnLayoutPlugin extends Plugin {
 }
 
 class CustomRatioModal extends Modal {
-  constructor(app, plugin, onSubmit) {
+  plugin: MultiColumnLayoutPlugin;
+  onSubmit: (colCount: number, ratios: number[]) => void;
+
+  constructor(app: App, plugin: MultiColumnLayoutPlugin, onSubmit: (colCount: number, ratios: number[]) => void) {
     super(app);
     this.plugin = plugin;
     this.onSubmit = onSubmit;
@@ -1012,29 +1063,34 @@ class CustomRatioModal extends Modal {
 
   onOpen() {
     const { contentEl } = this;
-    contentEl.createEl("h2", { text: this.plugin.t("modal.title") });
+    new Setting(contentEl).setName(this.plugin.t("modal.title")).setHeading();
 
     const instruction = contentEl.createEl("p", { text: this.plugin.t("modal.instruction") });
-    instruction.style.color = "var(--text-muted)";
-    instruction.style.marginBottom = "1rem";
+    instruction.addClass("mcl-modal-instruction");
 
     const inputContainer = contentEl.createDiv();
     const input = inputContainer.createEl("input", { type: "text", placeholder: "50/50" });
-    input.style.width = "100%";
+    input.addClass("mcl-modal-input");
     input.focus();
 
     const errorMsg = contentEl.createEl("p", { text: "" });
-    errorMsg.style.color = "var(--text-error)";
-    errorMsg.style.marginTop = "0.5rem";
-    errorMsg.style.display = "none";
+    errorMsg.addClass("mcl-modal-error");
 
     const btnContainer = contentEl.createDiv();
-    btnContainer.style.marginTop = "1rem";
-    btnContainer.style.display = "flex";
-    btnContainer.style.justifyContent = "flex-end";
+    btnContainer.addClass("mcl-modal-buttons");
 
     const submitBtn = btnContainer.createEl("button", { text: this.plugin.t("modal.insert") });
     submitBtn.addClass("mod-cta");
+
+    const showError = (message: string) => {
+      errorMsg.textContent = message;
+      errorMsg.addClass("is-visible");
+    };
+
+    const clearError = () => {
+      errorMsg.textContent = "";
+      errorMsg.removeClass("is-visible");
+    };
 
     const validateAndSubmit = () => {
       const val = input.value.trim();
@@ -1044,17 +1100,16 @@ class CustomRatioModal extends Modal {
       const sum = parts.reduce((a, b) => a + (isNaN(b) ? 0 : b), 0);
 
       if (parts.some(isNaN)) {
-        errorMsg.text = this.plugin.t("modal.error.format");
-        errorMsg.style.display = "block";
+        showError(this.plugin.t("modal.error.format"));
         return;
       }
 
       if (sum !== 100) {
-        errorMsg.text = this.plugin.t("modal.error.sum", sum);
-        errorMsg.style.display = "block";
+        showError(this.plugin.t("modal.error.sum", sum));
         return;
       }
 
+      clearError();
       this.onSubmit(parts.length, parts);
       this.close();
     };
@@ -1072,7 +1127,9 @@ class CustomRatioModal extends Modal {
 }
 
 class MultiColumnLayoutSettingTab extends PluginSettingTab {
-  constructor(app, plugin) {
+  plugin: MultiColumnLayoutPlugin;
+
+  constructor(app: App, plugin: MultiColumnLayoutPlugin) {
     super(app, plugin);
     this.plugin = plugin;
   }
@@ -1081,7 +1138,7 @@ class MultiColumnLayoutSettingTab extends PluginSettingTab {
     const { containerEl } = this;
     containerEl.empty();
 
-    containerEl.createEl("h2", { text: this.plugin.t("settings.title") });
+    new Setting(containerEl).setName(this.plugin.t("settings.title")).setHeading();
 
     new Setting(containerEl).setName(this.plugin.t("settings.general")).setHeading();
 
@@ -1094,6 +1151,7 @@ class MultiColumnLayoutSettingTab extends PluginSettingTab {
           .addOption("zh", "简体中文")
           .setValue(this.plugin.settings.language)
           .onChange(async (value) => {
+            if (value !== "en" && value !== "zh") return;
             this.plugin.settings.language = value;
             await this.plugin.saveSettings();
             this.display();
@@ -1218,13 +1276,13 @@ class MultiColumnLayoutSettingTab extends PluginSettingTab {
     migrateSetting.settingEl.addClass("multi-column-apply-all");
   }
 
-  addColorDropdown(containerEl, settingKey, name, desc) {
+  addColorDropdown(containerEl: HTMLElement, settingKey: ColorSettingKey, name: string, desc: string) {
     new Setting(containerEl)
       .setName(name)
       .setDesc(desc)
       .addDropdown((dropdown) => {
         Object.keys(PRESET_COLORS).forEach((color) => {
-          dropdown.addOption(color, this.plugin.colorLabel(color));
+          dropdown.addOption(color, this.plugin.colorLabel(color));       
         });
         dropdown.setValue(this.plugin.settings[settingKey]);
         dropdown.onChange(async (value) => {
@@ -1234,7 +1292,13 @@ class MultiColumnLayoutSettingTab extends PluginSettingTab {
       });
   }
 
-  addPixelControl(containerEl, settingKey, name, desc, opts: any = {}) {
+  addPixelControl(
+    containerEl: HTMLElement,
+    settingKey: PixelSettingKey,
+    name: string,
+    desc: string,
+    opts: PixelControlOptions = {}
+  ) {
     const unit = opts.unit || "px";
     const min = typeof opts.min === "number" ? opts.min : 0;
     const max = typeof opts.max === "number" ? opts.max : 10;
@@ -1257,7 +1321,7 @@ class MultiColumnLayoutSettingTab extends PluginSettingTab {
     setting.addSlider((slider) => {
       sliderRef = slider;
       slider.setLimits(min, max, step).setValue(current).onChange(async (value) => {
-        const n = clamp(parseFloat(value), min, max);
+        const n = clamp(value, min, max);
         this.plugin.settings[settingKey] = format(n);
         if (textRef) textRef.setValue(String(n));
         await this.plugin.saveSettings();

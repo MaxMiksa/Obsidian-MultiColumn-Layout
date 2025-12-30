@@ -1,7 +1,5 @@
-const { EditorSelection, Prec, Transaction } = require("@codemirror/state");
-const { EditorView, keymap } = require("@codemirror/view");
-
-type Extension = any;
+import { EditorSelection, Prec, Transaction, type Extension } from "@codemirror/state";
+import { EditorView, keymap } from "@codemirror/view";
 
 type ColumnContext = {
   prefixBare: string;
@@ -9,7 +7,7 @@ type ColumnContext = {
   colDepth: number;
 };
 
-function insertNewlineWithColumnPrefix(view: any, ctx: ColumnContext): boolean {
+function insertNewlineWithColumnPrefix(view: EditorView, ctx: ColumnContext): boolean {
   const range = view.state.selection.main;
   const insertText = `\n${ctx.prefixWithSpace}`;
   const anchor = range.from + insertText.length;
@@ -24,7 +22,7 @@ function insertNewlineWithColumnPrefix(view: any, ctx: ColumnContext): boolean {
 }
 
 function findEnclosingMultiColumnContainer(
-  view: any,
+  view: EditorView,
   fromLine: number,
   expectedDepth: number
 ): boolean {
@@ -39,7 +37,7 @@ function findEnclosingMultiColumnContainer(
   return false;
 }
 
-function getColumnContext(view: any): ColumnContext | null {
+function getColumnContext(view: EditorView): ColumnContext | null {
   const pos = view.state.selection.main.head;
   const doc = view.state.doc;
   const currentLine = doc.lineAt(pos);
@@ -96,13 +94,13 @@ function buildPrefixedPasteText(
   return `${firstWithPrefix}${suffix}`;
 }
 
-export function buildMultiColumnEditorExtensions(_plugin: any): Extension[] {
+export function buildMultiColumnEditorExtensions(_plugin: unknown): Extension[] {
   return [
     Prec.high(
       keymap.of([
         {
           key: "Enter",
-          run(view) {
+          run(view: EditorView) {
             const ctx = getColumnContext(view);
             if (!ctx) return false;
             return insertNewlineWithColumnPrefix(view, ctx);
@@ -111,7 +109,7 @@ export function buildMultiColumnEditorExtensions(_plugin: any): Extension[] {
       ])
     ),
     EditorView.domEventHandlers({
-      paste(event, view) {
+      paste(event: ClipboardEvent, view: EditorView) {
         const ctx = getColumnContext(view);
         if (!ctx) return;
 
