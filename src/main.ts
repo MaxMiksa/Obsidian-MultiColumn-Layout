@@ -608,7 +608,7 @@ class MultiColumnLayoutPlugin extends Plugin {
             const view = this.app.workspace.getActiveViewOfType(MarkdownView);
             const editor = view?.editor ?? null;
             if (view?.getMode?.() !== "source" || !editor || !view?.file || (sourcePath && view.file.path !== sourcePath)) {
-              new Notice("Please use Live preview (editable) to resize columns.");
+              new Notice("Please use live preview (editable) to resize columns.");
               return;
             }
 
@@ -745,7 +745,7 @@ class MultiColumnLayoutPlugin extends Plugin {
     const sourcePath = ctx?.sourcePath ?? dsPath ?? activePath;
 
     if (!activePath || !editor || (sourcePath && activePath !== sourcePath)) {
-      new Notice("Resize applied visually, but write-back requires the note to be open in Live preview.");
+      new Notice("Resize applied visually, but write-back requires the note to be open in live preview.");
       return;
     }
 

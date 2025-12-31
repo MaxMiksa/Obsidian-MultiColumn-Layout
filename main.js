@@ -606,7 +606,7 @@ var MultiColumnLayoutPlugin = class extends import_obsidian.Plugin {
           const view = this.app.workspace.getActiveViewOfType(import_obsidian.MarkdownView);
           const editor = (_a2 = view == null ? void 0 : view.editor) != null ? _a2 : null;
           if (((_b2 = view == null ? void 0 : view.getMode) == null ? void 0 : _b2.call(view)) !== "source" || !editor || !(view == null ? void 0 : view.file) || sourcePath && view.file.path !== sourcePath) {
-            new import_obsidian.Notice("Please use Live preview (editable) to resize columns.");
+            new import_obsidian.Notice("Please use live preview (editable) to resize columns.");
             return;
           }
           const containerRect = content.getBoundingClientRect();
@@ -723,7 +723,7 @@ var MultiColumnLayoutPlugin = class extends import_obsidian.Plugin {
     const dsPath = (_f = (_e = containerEl == null ? void 0 : containerEl.dataset) == null ? void 0 : _e.mclSourcePath) != null ? _f : null;
     const sourcePath = (_h = (_g = ctx == null ? void 0 : ctx.sourcePath) != null ? _g : dsPath) != null ? _h : activePath;
     if (!activePath || !editor || sourcePath && activePath !== sourcePath) {
-      new import_obsidian.Notice("Resize applied visually, but write-back requires the note to be open in Live preview.");
+      new import_obsidian.Notice("Resize applied visually, but write-back requires the note to be open in live preview.");
       return;
     }
     const parseMaybeInt = (v) => {
