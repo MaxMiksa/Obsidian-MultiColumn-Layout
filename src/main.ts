@@ -2,13 +2,14 @@ import { buildMultiColumnEditorExtensions } from "./editor/extensions";
 
 import {
   MarkdownView,
-  Menu,
+  type Menu,
   Modal,
   Notice,
   Plugin,
   PluginSettingTab,
   Setting,
   type App,
+  type Editor,
   type MarkdownPostProcessorContext
 } from "obsidian";
 
@@ -198,7 +199,7 @@ class MultiColumnLayoutPlugin extends Plugin {
     this.applySettingsStyles();
 
     this.registerEvent(
-      this.app.workspace.on("editor-menu", (menu, editor) => {
+      this.app.workspace.on("editor-menu", (menu: Menu, editor: Editor) => {
         this.addInsertMenu(menu, editor);
       })
     );
@@ -299,7 +300,7 @@ class MultiColumnLayoutPlugin extends Plugin {
     style.setProperty("--mcl-border-radius", borderRadius);
   }
 
-  addInsertMenu(menu, editor) {
+  addInsertMenu(menu: Menu, editor: Editor) {
     menu.addItem((item) => {
       item.setTitle(this.t("menu.2col"));
       item.setIcon("columns");
@@ -316,7 +317,7 @@ class MultiColumnLayoutPlugin extends Plugin {
       item.setTitle(this.t("menu.nested"));
       item.setIcon("layout");
       
-      const subMenu = item.setSubmenu();
+      const subMenu = (item as unknown as { setSubmenu: () => Menu }).setSubmenu();
 
       subMenu.addItem((subItem) => {
         subItem.setTitle(this.t("menu.nested.2col"));
