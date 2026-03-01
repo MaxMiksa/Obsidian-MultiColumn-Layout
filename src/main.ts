@@ -22,6 +22,7 @@ type MultiColumnLayoutLanguage = "en" | "zh";
 
 type MultiColumnLayoutSettings = {
   language: MultiColumnLayoutLanguage;
+  markdownExitOnEmptyEnter: boolean;
   dividerWidth: string;
   dividerStyle: string;
   dividerColor: string;
@@ -41,6 +42,7 @@ type PixelControlOptions = { min?: number; max?: number; step?: number; unit?: s
 
 const DEFAULT_SETTINGS: MultiColumnLayoutSettings = {
   language: "en",
+  markdownExitOnEmptyEnter: true,
   dividerWidth: "1px",
   dividerStyle: "solid",
   dividerColor: "gray",
@@ -74,6 +76,8 @@ const TEXTS = {
     "settings.general": "General",
     "settings.language": "Language",
     "settings.language.desc": "Choose the display language for the plugin.",
+    "settings.markdownExitOnEmptyEnter": "Markdown-style exit on empty Enter",
+    "settings.markdownExitOnEmptyEnter.desc": "When enabled, pressing Enter on an empty prefixed column line exits the column instead of continuing >>/>>>>.",
     "settings.background": "Background Color",
     "settings.background.desc": "Background color for the multi-column container.",
     "settings.border": "Container Border",
@@ -132,6 +136,8 @@ const TEXTS = {
     "settings.general": "常规",
     "settings.language": "语言",
     "settings.language.desc": "选择插件显示的语言。",
+    "settings.markdownExitOnEmptyEnter": "空行回车按 Markdown 方式退出",
+    "settings.markdownExitOnEmptyEnter.desc": "启用后，在列内空前缀行再次回车会退出分栏，不再继续补 >>/>>>>。",
     "settings.background": "背景颜色",
     "settings.background.desc": "多列布局容器的背景颜色。",
     "settings.border": "边框",
@@ -1158,7 +1164,19 @@ class MultiColumnLayoutSettingTab extends PluginSettingTab {
             this.display();
           })
       );
-    
+
+    new Setting(containerEl)
+      .setName(this.plugin.t("settings.markdownExitOnEmptyEnter"))
+      .setDesc(this.plugin.t("settings.markdownExitOnEmptyEnter.desc"))
+      .addToggle((toggle) =>
+        toggle
+          .setValue(this.plugin.settings.markdownExitOnEmptyEnter)
+          .onChange(async (value) => {
+            this.plugin.settings.markdownExitOnEmptyEnter = value;
+            await this.plugin.saveSettings();
+          })
+      );
+
     this.addColorDropdown(containerEl, "backgroundColor", this.plugin.t("settings.background"), this.plugin.t("settings.background.desc"));
 
     new Setting(containerEl).setName(this.plugin.t("settings.border")).setHeading();

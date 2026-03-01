@@ -39,9 +39,40 @@ function getColumnContext(view) {
     const hasContainer = findEnclosingMultiColumnContainer(view, lineNumber - 1, containerDepth);
     if (!hasContainer) continue;
     const prefixBare = `${m[1]}${m[2]}`;
-    return { prefixBare, prefixWithSpace: `${prefixBare} `, colDepth };
+    return {
+      prefixBare,
+      prefixWithSpace: `${prefixBare} `,
+      colDepth,
+      colHeaderLineNumber: lineNumber
+    };
   }
   return null;
+}
+function hasUnquotedBoundarySinceColHeader(doc, colHeaderLineNumber, currentLineNumber) {
+  const start = Math.max(1, colHeaderLineNumber + 1);
+  for (let lineNumber = start; lineNumber <= currentLineNumber; lineNumber++) {
+    const text = doc.line(lineNumber).text;
+    if (!/^\s*>/.test(text)) return true;
+  }
+  return false;
+}
+function escapeRegExp(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+function isPrefixOnlyLine(lineText, ctx) {
+  const re = new RegExp(`^${escapeRegExp(ctx.prefixBare)}\\s*$`);
+  return re.test(lineText);
+}
+function clearCurrentLineAndKeepCursor(view) {
+  const range = view.state.selection.main;
+  if (!range.empty) return false;
+  const line = view.state.doc.lineAt(range.from);
+  view.dispatch({
+    changes: { from: line.from, to: line.to, insert: "" },
+    selection: import_state.EditorSelection.cursor(line.from),
+    annotations: import_state.Transaction.userEvent.of("input.enter")
+  });
+  return true;
 }
 function normalizeNewlines(text) {
   return text.replace(/\r\n?/g, "\n");
@@ -65,15 +96,32 @@ ${ctx.prefixWithSpace}${line}`;
   }).join("");
   return `${firstWithPrefix}${suffix}`;
 }
-function buildMultiColumnEditorExtensions(_plugin) {
+function buildMultiColumnEditorExtensions(plugin) {
   return [
     import_state.Prec.high(
       import_view.keymap.of([
         {
           key: "Enter",
           run(view) {
+            var _a;
             const ctx = getColumnContext(view);
             if (!ctx) return false;
+            const markdownExitOnEmptyEnter = Boolean((_a = plugin.settings) == null ? void 0 : _a.markdownExitOnEmptyEnter);
+            if (!markdownExitOnEmptyEnter) {
+              return insertNewlineWithColumnPrefix(view, ctx);
+            }
+            const range = view.state.selection.main;
+            const line = view.state.doc.lineAt(range.from);
+            if (hasUnquotedBoundarySinceColHeader(
+              view.state.doc,
+              ctx.colHeaderLineNumber,
+              line.number
+            )) {
+              return false;
+            }
+            if (range.empty && isPrefixOnlyLine(line.text, ctx)) {
+              return clearCurrentLineAndKeepCursor(view);
+            }
             return insertNewlineWithColumnPrefix(view, ctx);
           }
         }
@@ -81,13 +129,17 @@ function buildMultiColumnEditorExtensions(_plugin) {
     ),
     import_view.EditorView.domEventHandlers({
       paste(event, view) {
-        var _a;
+        var _a, _b;
         const ctx = getColumnContext(view);
         if (!ctx) return;
-        const clipboardText = (_a = event.clipboardData) == null ? void 0 : _a.getData("text/plain");
-        if (!clipboardText) return;
+        const markdownExitOnEmptyEnter = Boolean((_a = plugin.settings) == null ? void 0 : _a.markdownExitOnEmptyEnter);
         const range = view.state.selection.main;
         const line = view.state.doc.lineAt(range.from);
+        if (markdownExitOnEmptyEnter && hasUnquotedBoundarySinceColHeader(view.state.doc, ctx.colHeaderLineNumber, line.number)) {
+          return;
+        }
+        const clipboardText = (_b = event.clipboardData) == null ? void 0 : _b.getData("text/plain");
+        if (!clipboardText) return;
         const prefixEndInLine = line.text.startsWith(ctx.prefixWithSpace) ? ctx.prefixWithSpace.length : ctx.prefixBare.length;
         const prefixEndPos = line.from + prefixEndInLine;
         const prefixFirstLine = range.from < prefixEndPos;
@@ -109,6 +161,7 @@ function buildMultiColumnEditorExtensions(_plugin) {
 var import_obsidian = require("obsidian");
 var DEFAULT_SETTINGS = {
   language: "en",
+  markdownExitOnEmptyEnter: true,
   dividerWidth: "1px",
   dividerStyle: "solid",
   dividerColor: "gray",
@@ -140,6 +193,8 @@ var TEXTS = {
     "settings.general": "General",
     "settings.language": "Language",
     "settings.language.desc": "Choose the display language for the plugin.",
+    "settings.markdownExitOnEmptyEnter": "Markdown-style exit on empty Enter",
+    "settings.markdownExitOnEmptyEnter.desc": "When enabled, pressing Enter on an empty prefixed column line exits the column instead of continuing >>/>>>>.",
     "settings.background": "Background Color",
     "settings.background.desc": "Background color for the multi-column container.",
     "settings.border": "Container Border",
@@ -198,6 +253,8 @@ var TEXTS = {
     "settings.general": "\u5E38\u89C4",
     "settings.language": "\u8BED\u8A00",
     "settings.language.desc": "\u9009\u62E9\u63D2\u4EF6\u663E\u793A\u7684\u8BED\u8A00\u3002",
+    "settings.markdownExitOnEmptyEnter": "\u7A7A\u884C\u56DE\u8F66\u6309 Markdown \u65B9\u5F0F\u9000\u51FA",
+    "settings.markdownExitOnEmptyEnter.desc": "\u542F\u7528\u540E\uFF0C\u5728\u5217\u5185\u7A7A\u524D\u7F00\u884C\u518D\u6B21\u56DE\u8F66\u4F1A\u9000\u51FA\u5206\u680F\uFF0C\u4E0D\u518D\u7EE7\u7EED\u8865 >>/>>>>\u3002",
     "settings.background": "\u80CC\u666F\u989C\u8272",
     "settings.background.desc": "\u591A\u5217\u5E03\u5C40\u5BB9\u5668\u7684\u80CC\u666F\u989C\u8272\u3002",
     "settings.border": "\u8FB9\u6846",
@@ -1036,6 +1093,12 @@ var MultiColumnLayoutSettingTab = class extends import_obsidian.PluginSettingTab
         this.plugin.settings.language = value;
         await this.plugin.saveSettings();
         this.display();
+      })
+    );
+    new import_obsidian.Setting(containerEl).setName(this.plugin.t("settings.markdownExitOnEmptyEnter")).setDesc(this.plugin.t("settings.markdownExitOnEmptyEnter.desc")).addToggle(
+      (toggle) => toggle.setValue(this.plugin.settings.markdownExitOnEmptyEnter).onChange(async (value) => {
+        this.plugin.settings.markdownExitOnEmptyEnter = value;
+        await this.plugin.saveSettings();
       })
     );
     this.addColorDropdown(containerEl, "backgroundColor", this.plugin.t("settings.background"), this.plugin.t("settings.background.desc"));

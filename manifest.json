@@ -1,7 +1,7 @@
 {
   "id": "multi-column-layout",
   "name": "Multi-Column Layout",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "minAppVersion": "1.5.0",
   "description": "Multi-column layouts with quick insert templates. Supports nested columns and rich text.",
   "author": "zheyuan (Max) Kong",

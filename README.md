@@ -29,7 +29,7 @@ Multi-Column Layout is an Obsidian plugin that simplifies the creation of side-b
 | **📐 Custom Widths** | Adjust column widths easily using metadata like `[!col|40]`. |
 | **🖱️ Drag Resize** | Drag dividers in Live Preview to resize columns and write ratios back to `[!col|..]`. |
 | **📺 Live Preview** | See your layouts rendered instantly as you type. |
-| **✍️ In-Column Editing** | In Live Preview, Enter and multi-line paste keep content inside the current column automatically (`>>/>>>>`). |
+| **✍️ In-Column Editing** | In Live Preview, Markdown-style empty-line exit is enabled by default; you can disable it in Settings to keep strict in-column auto-prefix behavior (`>>/>>>>`). |
 | **🔗 Compatibility** | Uses standard Markdown/Callout syntax for maximum portability. |
 
 ## 📥 Installation

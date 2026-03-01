@@ -5,6 +5,15 @@ type ColumnContext = {
   prefixBare: string;
   prefixWithSpace: string;
   colDepth: number;
+  colHeaderLineNumber: number;
+};
+
+type EditorFeatureSettings = {
+  markdownExitOnEmptyEnter?: boolean;
+};
+
+type EditorFeaturePlugin = {
+  settings?: EditorFeatureSettings;
 };
 
 function insertNewlineWithColumnPrefix(view: EditorView, ctx: ColumnContext): boolean {
@@ -56,10 +65,50 @@ function getColumnContext(view: EditorView): ColumnContext | null {
     if (!hasContainer) continue;
 
     const prefixBare = `${m[1]}${m[2]}`;
-    return { prefixBare, prefixWithSpace: `${prefixBare} `, colDepth };
+    return {
+      prefixBare,
+      prefixWithSpace: `${prefixBare} `,
+      colDepth,
+      colHeaderLineNumber: lineNumber
+    };
   }
 
   return null;
+}
+
+function hasUnquotedBoundarySinceColHeader(
+  doc: EditorView["state"]["doc"],
+  colHeaderLineNumber: number,
+  currentLineNumber: number
+): boolean {
+  const start = Math.max(1, colHeaderLineNumber + 1);
+  for (let lineNumber = start; lineNumber <= currentLineNumber; lineNumber++) {
+    const text = doc.line(lineNumber).text;
+    if (!/^\s*>/.test(text)) return true;
+  }
+  return false;
+}
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function isPrefixOnlyLine(lineText: string, ctx: ColumnContext): boolean {
+  const re = new RegExp(`^${escapeRegExp(ctx.prefixBare)}\\s*$`);
+  return re.test(lineText);
+}
+
+function clearCurrentLineAndKeepCursor(view: EditorView): boolean {
+  const range = view.state.selection.main;
+  if (!range.empty) return false;
+
+  const line = view.state.doc.lineAt(range.from);
+  view.dispatch({
+    changes: { from: line.from, to: line.to, insert: "" },
+    selection: EditorSelection.cursor(line.from),
+    annotations: Transaction.userEvent.of("input.enter")
+  });
+  return true;
 }
 
 function normalizeNewlines(text: string): string {
@@ -94,7 +143,7 @@ function buildPrefixedPasteText(
   return `${firstWithPrefix}${suffix}`;
 }
 
-export function buildMultiColumnEditorExtensions(_plugin: unknown): Extension[] {
+export function buildMultiColumnEditorExtensions(plugin: EditorFeaturePlugin): Extension[] {
   return [
     Prec.high(
       keymap.of([
@@ -103,6 +152,28 @@ export function buildMultiColumnEditorExtensions(_plugin: unknown): Extension[] 
           run(view: EditorView) {
             const ctx = getColumnContext(view);
             if (!ctx) return false;
+
+            const markdownExitOnEmptyEnter = Boolean(plugin.settings?.markdownExitOnEmptyEnter);
+            if (!markdownExitOnEmptyEnter) {
+              return insertNewlineWithColumnPrefix(view, ctx);
+            }
+
+            const range = view.state.selection.main;
+            const line = view.state.doc.lineAt(range.from);
+            if (
+              hasUnquotedBoundarySinceColHeader(
+                view.state.doc,
+                ctx.colHeaderLineNumber,
+                line.number
+              )
+            ) {
+              return false;
+            }
+
+            if (range.empty && isPrefixOnlyLine(line.text, ctx)) {
+              return clearCurrentLineAndKeepCursor(view);
+            }
+
             return insertNewlineWithColumnPrefix(view, ctx);
           }
         }
@@ -113,11 +184,19 @@ export function buildMultiColumnEditorExtensions(_plugin: unknown): Extension[] 
         const ctx = getColumnContext(view);
         if (!ctx) return;
 
+        const markdownExitOnEmptyEnter = Boolean(plugin.settings?.markdownExitOnEmptyEnter);
+        const range = view.state.selection.main;
+        const line = view.state.doc.lineAt(range.from);
+        if (
+          markdownExitOnEmptyEnter &&
+          hasUnquotedBoundarySinceColHeader(view.state.doc, ctx.colHeaderLineNumber, line.number)
+        ) {
+          return;
+        }
+
         const clipboardText = event.clipboardData?.getData("text/plain");
         if (!clipboardText) return;
 
-        const range = view.state.selection.main;
-        const line = view.state.doc.lineAt(range.from);
         const prefixEndInLine = line.text.startsWith(ctx.prefixWithSpace)
           ? ctx.prefixWithSpace.length
           : ctx.prefixBare.length;

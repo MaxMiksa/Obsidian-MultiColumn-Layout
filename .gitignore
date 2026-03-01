@@ -22,8 +22,15 @@ Files/SDD.md
 Files/RELEASE_NOTES.md
 Files/CHANGELOG.md
 Files/CHANGELOG-zh.md
+RELEASE_NOTES.md
+CHANGELOG.md
+CHANGELOG-zh.md
 AI_RELEASE_RULES.md
 CHECKLIST.md
+AGENTS.md
+CHAT_LOGS.md
+PROJECT.md
+PLAN_*.md
 
 # Obsidian plugin user data
 data.json
