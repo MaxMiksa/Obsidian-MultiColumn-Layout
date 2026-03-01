@@ -122,7 +122,7 @@ The syntax is designed to be simple and intuitive if you prefer typing it manual
 
 ## 🤝 Contribution & Contact
 
-Welcome to submit Issues and Pull Requests!
+Welcome to submit Issues and Pull Requests!  
 Any questions or suggestions? Please contact Zheyuan (Max) Kong (Carnegie Mellon University, Pittsburgh, PA).
 
 Zheyuan (Max) Kong: kongzheyuan@outlook.com | zheyuank@andrew.cmu.edu
