@@ -158,12 +158,59 @@ body.mcl-global-resizing {
   pointer-events: none;
 }
 
+/* Optional mode: render each direct column as its own card. */
+body.mcl-separated-columns-enabled .callout[data-callout="multi-column"][data-callout-metadata*="bordered"] {
+  background: transparent;
+  border: none;
+}
+
+body.mcl-separated-columns-enabled .callout[data-callout="multi-column"][data-callout-metadata*="bordered"] > .callout-content {
+  gap: 0;
+}
+
+body.mcl-separated-columns-enabled .callout[data-callout="multi-column"][data-callout-metadata*="bordered"] > .callout-content > .callout[data-callout="col"] {
+  background: transparent;
+  border: none;
+  box-sizing: border-box;
+  overflow: visible;
+  padding: 0 calc(var(--multi-column-gap, 1rem) / 2);
+}
+
+body.mcl-separated-columns-enabled .callout[data-callout="multi-column"][data-callout-metadata*="bordered"] > .callout-content > .callout[data-callout="col"]:first-child {
+  padding-left: 0;
+}
+
+body.mcl-separated-columns-enabled .callout[data-callout="multi-column"][data-callout-metadata*="bordered"] > .callout-content > .callout[data-callout="col"]:last-child {
+  padding-right: 0;
+}
+
+body.mcl-separated-columns-enabled .callout[data-callout="multi-column"][data-callout-metadata*="bordered"] > .callout-content > .callout[data-callout="col"] > .callout-content {
+  background: var(--mcl-background-color, transparent);
+  border: var(--mcl-border-width, 0) solid var(--mcl-border-color, transparent);
+  border-radius: var(--mcl-border-radius, 0) !important;
+  box-sizing: border-box;
+  height: 100%;
+  overflow: hidden;
+  padding: 1rem;
+}
+
+body.mcl-separated-columns-enabled .callout[data-callout="multi-column"][data-callout-metadata*="bordered"] > .callout-content > .callout[data-callout="col"]:not(:last-child)::after {
+  content: none;
+}
+
 /* Horizontal Dividers */
 .callout[data-callout="multi-column"][data-callout-metadata*="horizontal"] {
   border-top: var(--mcl-horz-divider-width, 1px) var(--mcl-horz-divider-style, solid) var(--mcl-horz-divider-color, var(--background-modifier-border)) !important;
   border-bottom: var(--mcl-horz-divider-width, 1px) var(--mcl-horz-divider-style, solid) var(--mcl-horz-divider-color, var(--background-modifier-border)) !important;
   padding-top: 1rem;
   padding-bottom: 1rem;
+}
+
+body.mcl-separated-columns-enabled .callout[data-callout="multi-column"][data-callout-metadata*="bordered"][data-callout-metadata*="horizontal"] {
+  border-top: none !important;
+  border-bottom: none !important;
+  padding-top: 0;
+  padding-bottom: 0;
 }
 
 .callout[data-callout="col"][data-callout-metadata="1"] { flex: 0 0 1%; }

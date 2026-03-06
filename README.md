@@ -25,6 +25,7 @@ Multi-Column Layout is an Obsidian plugin that simplifies the creation of side-b
 | :--- | :--- |
 | **🚀 Quick Insert** | Right-click menu for 2-col, 3-col, Sidebar, and **Nested** layouts. |
 | **🎨 Visual Styling** | Customize background colors, borders, and corner radius in settings. |
+| **🧱 Separate Column Cards** | Optional setting to render bordered columns as independent cards instead of one continuous panel. |
 | **🧩 Nested Layouts** | Create complex grids by nesting columns inside columns. |
 | **📐 Custom Widths** | Adjust column widths easily using metadata like `[!col|40]`. |
 | **🖱️ Drag Resize** | Drag dividers in Live Preview to resize columns and write ratios back to `[!col|..]`. |

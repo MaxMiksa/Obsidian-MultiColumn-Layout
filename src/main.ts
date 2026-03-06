@@ -34,6 +34,7 @@ type MultiColumnLayoutSettings = {
   borderEnabled: boolean;
   borderWidth: string;
   borderRadius: string;
+  separateColumnAppearance: boolean;
 };
 
 type ColorSettingKey = "backgroundColor" | "dividerColor" | "horzDividerColor";
@@ -53,7 +54,8 @@ const DEFAULT_SETTINGS: MultiColumnLayoutSettings = {
   backgroundColor: "none",
   borderEnabled: false,
   borderWidth: "1px",
-  borderRadius: "0"
+  borderRadius: "0",
+  separateColumnAppearance: false
 };
 
 const PRESET_COLORS = {
@@ -85,6 +87,8 @@ const TEXTS = {
     "settings.border.enable.desc": "Draw a border around the multi-column container. Border color follows background (slightly darker).",
     "settings.border.width": "Border Width",
     "settings.border.radius": "Corner Radius",
+    "settings.border.separate": "Separate Columns Visually",
+    "settings.border.separate.desc": "When enabled, bordered layouts render each direct column as its own card instead of one continuous panel.",
     "colors.none": "Transparent",
     "colors.gray": "Gray",
     "colors.red": "Red",
@@ -145,6 +149,8 @@ const TEXTS = {
     "settings.border.enable.desc": "为多列容器绘制边框，颜色与背景一致但略深。",
     "settings.border.width": "边框宽度",
     "settings.border.radius": "圆角半径",
+    "settings.border.separate": "让各分栏视觉上独立",
+    "settings.border.separate.desc": "启用后，带边框的布局会把每个直接分栏渲染为独立卡片，而不是连续的一整块。",
     "colors.none": "透明",
     "colors.gray": "灰色",
     "colors.red": "红色",
@@ -224,6 +230,10 @@ class MultiColumnLayoutPlugin extends Plugin {
     this.registerEditorExtension(buildMultiColumnEditorExtensions(this));       
   }
 
+  onunload() {
+    document.body.classList.remove("mcl-separated-columns-enabled");
+  }
+
   getCM6EditorView(markdownView: MarkdownView | null | undefined): CM6EditorViewLike | null {
     const editor = markdownView?.editor;
     if (!editor) return null;
@@ -264,7 +274,8 @@ class MultiColumnLayoutPlugin extends Plugin {
   }
 
   applySettingsStyles() {
-    const style = document.body.style;
+    const { body } = document;
+    const style = body.style;
 
     const vColor = PRESET_COLORS[this.settings.dividerColor] || this.settings.dividerColor;
     const hColor = PRESET_COLORS[this.settings.horzDividerColor] || this.settings.horzDividerColor;
@@ -304,6 +315,7 @@ class MultiColumnLayoutPlugin extends Plugin {
     style.setProperty("--mcl-border-color", borderColor || "transparent");
     style.setProperty("--mcl-border-width", borderWidth);
     style.setProperty("--mcl-border-radius", borderRadius);
+    body.classList.toggle("mcl-separated-columns-enabled", this.settings.separateColumnAppearance);
   }
 
   addInsertMenu(menu: Menu, editor: Editor) {
@@ -1207,6 +1219,18 @@ class MultiColumnLayoutSettingTab extends PluginSettingTab {
       "",
       { min: 0, max: 2, step: 0.1, unit: "rem" }
     );
+
+    new Setting(containerEl)
+      .setName(this.plugin.t("settings.border.separate"))
+      .setDesc(this.plugin.t("settings.border.separate.desc"))
+      .addToggle((toggle) =>
+        toggle
+          .setValue(this.plugin.settings.separateColumnAppearance)
+          .onChange(async (value) => {
+            this.plugin.settings.separateColumnAppearance = value;
+            await this.plugin.saveSettings();
+          })
+      );
 
     new Setting(containerEl).setName(this.plugin.t("settings.vertical")).setHeading();
 

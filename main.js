@@ -172,7 +172,8 @@ var DEFAULT_SETTINGS = {
   backgroundColor: "none",
   borderEnabled: false,
   borderWidth: "1px",
-  borderRadius: "0"
+  borderRadius: "0",
+  separateColumnAppearance: false
 };
 var PRESET_COLORS = {
   "none": "transparent",
@@ -202,6 +203,8 @@ var TEXTS = {
     "settings.border.enable.desc": "Draw a border around the multi-column container. Border color follows background (slightly darker).",
     "settings.border.width": "Border Width",
     "settings.border.radius": "Corner Radius",
+    "settings.border.separate": "Separate Columns Visually",
+    "settings.border.separate.desc": "When enabled, bordered layouts render each direct column as its own card instead of one continuous panel.",
     "colors.none": "Transparent",
     "colors.gray": "Gray",
     "colors.red": "Red",
@@ -262,6 +265,8 @@ var TEXTS = {
     "settings.border.enable.desc": "\u4E3A\u591A\u5217\u5BB9\u5668\u7ED8\u5236\u8FB9\u6846\uFF0C\u989C\u8272\u4E0E\u80CC\u666F\u4E00\u81F4\u4F46\u7565\u6DF1\u3002",
     "settings.border.width": "\u8FB9\u6846\u5BBD\u5EA6",
     "settings.border.radius": "\u5706\u89D2\u534A\u5F84",
+    "settings.border.separate": "\u8BA9\u5404\u5206\u680F\u89C6\u89C9\u4E0A\u72EC\u7ACB",
+    "settings.border.separate.desc": "\u542F\u7528\u540E\uFF0C\u5E26\u8FB9\u6846\u7684\u5E03\u5C40\u4F1A\u628A\u6BCF\u4E2A\u76F4\u63A5\u5206\u680F\u6E32\u67D3\u4E3A\u72EC\u7ACB\u5361\u7247\uFF0C\u800C\u4E0D\u662F\u8FDE\u7EED\u7684\u4E00\u6574\u5757\u3002",
     "colors.none": "\u900F\u660E",
     "colors.gray": "\u7070\u8272",
     "colors.red": "\u7EA2\u8272",
@@ -335,6 +340,9 @@ var MultiColumnLayoutPlugin = class extends import_obsidian.Plugin {
     );
     this.registerEditorExtension(buildMultiColumnEditorExtensions(this));
   }
+  onunload() {
+    document.body.classList.remove("mcl-separated-columns-enabled");
+  }
   getCM6EditorView(markdownView) {
     var _a, _b, _c, _d;
     const editor = markdownView == null ? void 0 : markdownView.editor;
@@ -369,7 +377,8 @@ var MultiColumnLayoutPlugin = class extends import_obsidian.Plugin {
     this.applySettingsStyles();
   }
   applySettingsStyles() {
-    const style = document.body.style;
+    const { body } = document;
+    const style = body.style;
     const vColor = PRESET_COLORS[this.settings.dividerColor] || this.settings.dividerColor;
     const hColor = PRESET_COLORS[this.settings.horzDividerColor] || this.settings.horzDividerColor;
     const baseColor = PRESET_COLORS[this.settings.backgroundColor] || this.settings.backgroundColor;
@@ -401,6 +410,7 @@ var MultiColumnLayoutPlugin = class extends import_obsidian.Plugin {
     style.setProperty("--mcl-border-color", borderColor || "transparent");
     style.setProperty("--mcl-border-width", borderWidth);
     style.setProperty("--mcl-border-radius", borderRadius);
+    body.classList.toggle("mcl-separated-columns-enabled", this.settings.separateColumnAppearance);
   }
   addInsertMenu(menu, editor) {
     menu.addItem((item) => {
@@ -1121,6 +1131,12 @@ var MultiColumnLayoutSettingTab = class extends import_obsidian.PluginSettingTab
       this.plugin.t("settings.border.radius"),
       "",
       { min: 0, max: 2, step: 0.1, unit: "rem" }
+    );
+    new import_obsidian.Setting(containerEl).setName(this.plugin.t("settings.border.separate")).setDesc(this.plugin.t("settings.border.separate.desc")).addToggle(
+      (toggle) => toggle.setValue(this.plugin.settings.separateColumnAppearance).onChange(async (value) => {
+        this.plugin.settings.separateColumnAppearance = value;
+        await this.plugin.saveSettings();
+      })
     );
     new import_obsidian.Setting(containerEl).setName(this.plugin.t("settings.vertical")).setHeading();
     this.addPixelControl(
