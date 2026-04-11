@@ -126,4 +126,4 @@ The syntax is designed to be simple and intuitive if you prefer typing it manual
 Welcome to submit Issues and Pull Requests!  
 Any questions or suggestions? Please contact Zheyuan (Max) Kong (Carnegie Mellon University, Pittsburgh, PA).
 
-Zheyuan (Max) Kong: kongzheyuan@outlook.com | zheyuank@andrew.cmu.edu
+Zheyuan (Max) Kong: kongzheyuan@outlook.com | zheyuank@tepper.cmu.edu
